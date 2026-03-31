@@ -1,9 +1,12 @@
 import { useEffect, useRef, useCallback } from 'react'
 import {
   createChart,
+  createSeriesMarkers,
+  CandlestickSeries,
   ColorType,
   type IChartApi,
   type ISeriesApi,
+  type ISeriesMarkersPluginApi,
   type CandlestickData,
   type SeriesMarker,
   type Time,
@@ -32,6 +35,7 @@ export function PriceChart({ candles, trades, selectedTradeIndex, onTradeClick }
   const containerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null)
+  const markersRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null)
 
   const handleClick = useCallback(
     (param: any) => {
@@ -65,7 +69,7 @@ export function PriceChart({ candles, trades, selectedTradeIndex, onTradeClick }
       },
     })
 
-    const series = chart.addCandlestickSeries({
+    const series = chart.addSeries(CandlestickSeries, {
       upColor: '#4ade80',
       downColor: '#ef4444',
       borderVisible: false,
@@ -75,6 +79,7 @@ export function PriceChart({ candles, trades, selectedTradeIndex, onTradeClick }
 
     chartRef.current = chart
     seriesRef.current = series
+    markersRef.current = createSeriesMarkers(series)
 
     chart.subscribeClick(handleClick)
 
@@ -96,6 +101,7 @@ export function PriceChart({ candles, trades, selectedTradeIndex, onTradeClick }
       chart.remove()
       chartRef.current = null
       seriesRef.current = null
+      markersRef.current = null
     }
   }, [handleClick])
 
@@ -109,7 +115,7 @@ export function PriceChart({ candles, trades, selectedTradeIndex, onTradeClick }
       close: c.close,
     }))
     seriesRef.current.setData(data)
-    seriesRef.current.setMarkers(tradesToMarkers(trades))
+    markersRef.current?.setMarkers(tradesToMarkers(trades))
     chartRef.current?.timeScale().fitContent()
   }, [candles, trades])
 

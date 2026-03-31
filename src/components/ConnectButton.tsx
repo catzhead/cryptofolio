@@ -3,7 +3,7 @@ import { ConnectButton as RainbowConnectButton } from '@rainbow-me/rainbowkit'
 export function ConnectButton() {
   return (
     <RainbowConnectButton.Custom>
-      {({ account, chain, openConnectModal, openChainModal, openAccountModal, mounted }) => {
+      {({ account, chain, openConnectModal, openAccountModal, mounted }) => {
         const connected = mounted && account && chain
 
         return (
