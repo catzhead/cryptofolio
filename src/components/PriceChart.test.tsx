@@ -4,16 +4,18 @@ import { PriceChart } from './PriceChart'
 import type { OHLCCandle, Trade } from '../types'
 
 vi.mock('lightweight-charts', () => {
+  const mockMarkersPlugin = {
+    setMarkers: vi.fn(),
+  }
   const mockSeries = {
     setData: vi.fn(),
-    setMarkers: vi.fn(),
   }
   const mockTimeScale = {
     fitContent: vi.fn(),
     setVisibleRange: vi.fn(),
   }
   const mockChart = {
-    addCandlestickSeries: vi.fn(() => mockSeries),
+    addSeries: vi.fn(() => mockSeries),
     timeScale: vi.fn(() => mockTimeScale),
     applyOptions: vi.fn(),
     remove: vi.fn(),
@@ -22,6 +24,8 @@ vi.mock('lightweight-charts', () => {
   }
   return {
     createChart: vi.fn(() => mockChart),
+    createSeriesMarkers: vi.fn(() => mockMarkersPlugin),
+    CandlestickSeries: 'CandlestickSeries',
     ColorType: { Solid: 'Solid' },
   }
 })
