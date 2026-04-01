@@ -14,6 +14,7 @@ import { useDemo } from './hooks/useDemo'
 import { queryClient } from './queryClient'
 import { MOCK_TOKENS, getMockCandles, getMockTrades } from './lib/mockData'
 import type { TimeRange } from './types'
+import { TIME_RANGE_OPTIONS } from './types'
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state = { error: null as Error | null }
@@ -81,6 +82,26 @@ function Dashboard() {
 
   const { selectedIndex, select, selectPrevious, selectNext, selectLast } =
     useTradeSelection(trades?.length ?? 0)
+
+  // Auto-expand time range when selecting a trade outside current candle window
+  useEffect(() => {
+    if (selectedIndex === null || !trades?.[selectedIndex] || !candles?.length) return
+    const tradeSec = Math.floor(new Date(trades[selectedIndex].blockTimestamp).getTime() / 1000)
+    const candleStart = candles[0].time
+    const candleEnd = candles[candles.length - 1].time
+    if (tradeSec >= candleStart && tradeSec <= candleEnd) return
+
+    // Find the smallest time range that covers the trade
+    const now = Date.now() / 1000
+    const tradeAgeDays = (now - tradeSec) / 86400
+    const numericRanges = TIME_RANGE_OPTIONS
+      .filter((r) => r.days !== 'max')
+      .map((r) => ({ ...r, num: parseInt(r.days, 10) }))
+      .sort((a, b) => a.num - b.num)
+
+    const fit = numericRanges.find((r) => r.num >= tradeAgeDays)
+    setTimeRange(fit ? fit.days : 'max')
+  }, [selectedIndex, trades, candles])
 
   useEffect(() => {
     setSelectedTokenIndex(0)
