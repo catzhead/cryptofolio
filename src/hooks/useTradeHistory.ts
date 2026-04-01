@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { fetchTokenTransfers, fetchNativeTransfers } from '../lib/moralis'
-import { resolveCoingeckoId, fetchHistoricalPrice, isNativeToken } from '../lib/coingecko'
+import { fetchHistoricalPrice, isNativeToken } from '../lib/coingecko'
 import { fetchFXRate, fetchCurrentFXRate } from '../lib/fx'
 import { CHAINS } from '../lib/chains'
 import type { ChainKey, Trade } from '../types'
@@ -9,6 +9,7 @@ export function useTradeHistory(
   address: string | undefined,
   chain: ChainKey | undefined,
   tokenAddress: string | undefined,
+  coinId: string | undefined,
 ) {
   return useQuery({
     queryKey: ['tradeHistory', address, chain, tokenAddress],
@@ -16,23 +17,11 @@ export function useTradeHistory(
       const chainConfig = CHAINS[chain!]
       const native = isNativeToken(chainConfig.coingeckoPlatform, tokenAddress!)
 
-      let transfers
-      try {
-        transfers = native
-          ? await fetchNativeTransfers(address!, chainConfig.moralisChain)
-          : await fetchTokenTransfers(address!, chainConfig.moralisChain, tokenAddress!)
-      } catch (e) {
-        throw new Error(`Moralis transfers failed (${native ? 'native' : 'erc20'}, chain=${chainConfig.moralisChain}): ${e instanceof Error ? e.message : e}`)
-      }
+      const transfers = native
+        ? await fetchNativeTransfers(address!, chainConfig.moralisChain)
+        : await fetchTokenTransfers(address!, chainConfig.moralisChain, tokenAddress!)
 
       if (transfers.length === 0) return []
-
-      let coinId: string
-      try {
-        coinId = await resolveCoingeckoId(chainConfig.coingeckoPlatform, tokenAddress!)
-      } catch (e) {
-        throw new Error(`CoinGecko ID resolution failed: ${e instanceof Error ? e.message : e}`)
-      }
 
       const currentFXRate = await fetchCurrentFXRate()
 
@@ -45,7 +34,7 @@ export function useTradeHistory(
 
           const date = t.block_timestamp.split('T')[0]
           const [usdPrice, fxRate] = await Promise.all([
-            fetchHistoricalPrice(coinId, date),
+            fetchHistoricalPrice(coinId!, date),
             fetchFXRate(date),
           ])
 
@@ -74,7 +63,7 @@ export function useTradeHistory(
 
       return trades
     },
-    enabled: !!address && !!chain && !!tokenAddress,
+    enabled: !!address && !!chain && !!tokenAddress && !!coinId,
     retry: 1,
   })
 }

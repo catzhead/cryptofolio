@@ -8,16 +8,14 @@ export function useCoingeckoId(tokenAddress: string | undefined, chain: ChainKey
     queryKey: ['coingeckoId', chain, tokenAddress],
     queryFn: () => resolveCoingeckoId(CHAINS[chain!].coingeckoPlatform, tokenAddress!),
     enabled: !!tokenAddress && !!chain,
+    staleTime: Infinity,
   })
 }
 
 export function useOHLC(
-  tokenAddress: string | undefined,
-  chain: ChainKey | undefined,
+  coinId: string | undefined,
   days: string,
 ) {
-  const { data: coinId } = useCoingeckoId(tokenAddress, chain)
-
   return useQuery<OHLCCandle[]>({
     queryKey: ['ohlc', coinId, days],
     queryFn: () => fetchOHLC(coinId!, days),

@@ -7,7 +7,7 @@ import { TimeRangeBar } from './components/TimeRangeBar'
 import { PriceChart } from './components/PriceChart'
 import { TradeTable } from './components/TradeTable'
 import { useTokenBalances } from './hooks/useTokenBalances'
-import { useOHLC } from './hooks/useOHLC'
+import { useCoingeckoId, useOHLC } from './hooks/useOHLC'
 import { useTradeHistory } from './hooks/useTradeHistory'
 import { useTradeSelection } from './hooks/useTradeSelection'
 import { useDemo } from './hooks/useDemo'
@@ -59,9 +59,13 @@ function Dashboard() {
 
   const selectedToken = tokens?.[selectedTokenIndex]
 
-  const { data: realCandles } = useOHLC(
+  const { data: coinId } = useCoingeckoId(
     isDemo ? undefined : selectedToken?.tokenAddress,
     isDemo ? undefined : selectedToken?.chain,
+  )
+
+  const { data: realCandles } = useOHLC(
+    isDemo ? undefined : coinId,
     timeRange,
   )
   const demoCandles = isDemo && selectedToken ? getMockCandles(selectedToken.tokenAddress, timeRange) : undefined
@@ -71,6 +75,7 @@ function Dashboard() {
     isDemo ? undefined : address,
     isDemo ? undefined : selectedToken?.chain,
     isDemo ? undefined : selectedToken?.tokenAddress,
+    isDemo ? undefined : coinId,
   )
   const trades = isDemo && selectedToken ? getMockTrades(selectedToken.tokenAddress) : realTrades
 
