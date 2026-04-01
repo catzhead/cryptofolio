@@ -67,10 +67,10 @@ export async function fetchTokenTransfers(
   do {
     const params = new URLSearchParams({
       chain,
-      'contract_addresses[]': contractAddress,
       order: 'ASC',
       limit: '100',
     })
+    params.append('contract_addresses', contractAddress)
     if (cursor) params.set('cursor', cursor)
 
     const url = `${MORALIS_BASE}/${address}/erc20/transfers?${params}`
@@ -79,6 +79,46 @@ export async function fetchTokenTransfers(
 
     const data: MoralisTransferResponse = await res.json()
     allTransfers.push(...data.result)
+    cursor = data.cursor
+  } while (cursor)
+
+  return allTransfers
+}
+
+// Fetch native token (ETH/POL/BNB) transfers
+export async function fetchNativeTransfers(
+  address: string,
+  chain: string,
+): Promise<MoralisTransfer[]> {
+  const allTransfers: MoralisTransfer[] = []
+  let cursor: string | null = null
+
+  do {
+    const params = new URLSearchParams({
+      chain,
+      order: 'ASC',
+      limit: '100',
+    })
+    if (cursor) params.set('cursor', cursor)
+
+    const url = `${MORALIS_BASE}/${address}/verbose?${params}`
+    const res = await fetch(url, { headers: headers() })
+    if (!res.ok) throw new Error(`Moralis native transfers error: ${res.status}`)
+
+    const data = await res.json()
+    // Native transactions have value in the main transaction, filter for non-zero native value
+    const nativeTxs = (data.result ?? [])
+      .filter((tx: any) => tx.value !== '0' && tx.value !== '')
+      .map((tx: any) => ({
+        transaction_hash: tx.hash,
+        block_timestamp: tx.block_timestamp,
+        from_address: tx.from_address,
+        to_address: tx.to_address,
+        value: tx.value,
+        token_symbol: tx.native_token_symbol ?? chain.toUpperCase(),
+        token_decimals: '18',
+      }))
+    allTransfers.push(...nativeTxs)
     cursor = data.cursor
   } while (cursor)
 

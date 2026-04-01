@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchTokenTransfers } from '../lib/moralis'
-import { resolveCoingeckoId, fetchHistoricalPrice } from '../lib/coingecko'
+import { fetchTokenTransfers, fetchNativeTransfers } from '../lib/moralis'
+import { resolveCoingeckoId, fetchHistoricalPrice, isNativeToken } from '../lib/coingecko'
 import { fetchFXRate, fetchCurrentFXRate } from '../lib/fx'
 import { CHAINS } from '../lib/chains'
 import type { ChainKey, Trade } from '../types'
@@ -13,14 +13,17 @@ export function useTradeHistory(
   return useQuery({
     queryKey: ['tradeHistory', address, chain, tokenAddress],
     queryFn: async (): Promise<Trade[]> => {
-      const transfers = await fetchTokenTransfers(
-        address!,
-        CHAINS[chain!].moralisChain,
-        tokenAddress!,
-      )
+      const chainConfig = CHAINS[chain!]
+      const native = isNativeToken(chainConfig.coingeckoPlatform, tokenAddress!)
+
+      const transfers = native
+        ? await fetchNativeTransfers(address!, chainConfig.moralisChain)
+        : await fetchTokenTransfers(address!, chainConfig.moralisChain, tokenAddress!)
+
+      if (transfers.length === 0) return []
 
       const coinId = await resolveCoingeckoId(
-        CHAINS[chain!].coingeckoPlatform,
+        chainConfig.coingeckoPlatform,
         tokenAddress!,
       )
 
@@ -65,5 +68,6 @@ export function useTradeHistory(
       return trades
     },
     enabled: !!address && !!chain && !!tokenAddress,
+    retry: 1,
   })
 }

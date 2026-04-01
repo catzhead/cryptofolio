@@ -73,6 +73,10 @@ const NATIVE_COINGECKO_IDS: Record<string, Record<string, string>> = {
   },
 }
 
+export function isNativeToken(platform: string, contractAddress: string): boolean {
+  return !!NATIVE_COINGECKO_IDS[platform]?.[contractAddress.toLowerCase()]
+}
+
 export async function resolveCoingeckoId(
   platform: string,
   contractAddress: string,
