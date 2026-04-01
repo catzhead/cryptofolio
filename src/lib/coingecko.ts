@@ -41,6 +41,51 @@ export async function fetchOHLC(
   }))
 }
 
+// Fetch price data for an arbitrary date range and aggregate into OHLC candles
+export async function fetchOHLCRange(
+  coinId: string,
+  fromUnix: number,
+  toUnix: number,
+  intervalSeconds: number,
+): Promise<OHLCCandle[]> {
+  const url = `${BASE}/coins/${coinId}/market_chart/range?vs_currency=usd&from=${fromUnix}&to=${toUnix}`
+  const res = await fetchWithRetry(url)
+  if (!res.ok) throw new Error(`CoinGecko market_chart/range error: ${res.status}`)
+
+  const data: { prices: [number, number][] } = await res.json()
+  if (!data.prices.length) return []
+
+  // Aggregate price points into OHLC buckets
+  const candles: OHLCCandle[] = []
+  const bucketStart = Math.floor(fromUnix / intervalSeconds) * intervalSeconds
+
+  let currentBucket = bucketStart
+  let open = data.prices[0][1]
+  let high = open
+  let low = open
+  let close = open
+
+  for (const [timestampMs, price] of data.prices) {
+    const timeSec = Math.floor(timestampMs / 1000)
+    const bucket = Math.floor(timeSec / intervalSeconds) * intervalSeconds
+
+    if (bucket !== currentBucket) {
+      candles.push({ time: currentBucket, open, high, low, close })
+      currentBucket = bucket
+      open = price
+      high = price
+      low = price
+    }
+    high = Math.max(high, price)
+    low = Math.min(low, price)
+    close = price
+  }
+  // Push last bucket
+  candles.push({ time: currentBucket, open, high, low, close })
+
+  return candles
+}
+
 export async function fetchHistoricalPrice(
   coinId: string,
   isoDate: string,

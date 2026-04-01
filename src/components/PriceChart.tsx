@@ -165,27 +165,36 @@ export function PriceChart({ candles, trades, selectedTradeIndex, onTradeClick }
     markersRef.current.setMarkers(tradesToMarkers(trades, candles, selectedTradeIndex))
   }, [trades, candles, selectedTradeIndex])
 
-  // Pan to selected trade
+  // Pan to selected trade if it's in the data but not currently visible
   useEffect(() => {
     if (selectedTradeIndex === null || !chartRef.current || !seriesRef.current || !trades[selectedTradeIndex]) return
 
     const chart = chartRef.current
     const series = seriesRef.current
     const trade = trades[selectedTradeIndex]
-    const targetTime = tradeTimeToCandle(trade.blockTimestamp, candles) as Time
+    const tradeSec = Math.floor(new Date(trade.blockTimestamp).getTime() / 1000)
 
+    // Check if trade is within candle data range
+    if (!candles.length) return
+    if (tradeSec < candles[0].time || tradeSec > candles[candles.length - 1].time) return
+
+    const targetTime = tradeTimeToCandle(trade.blockTimestamp, candles) as Time
     const data = series.data()
     const barIndex = data.findIndex((d) => (d.time as number) >= (targetTime as number))
-    if (barIndex >= 0) {
-      const visibleRange = chart.timeScale().getVisibleLogicalRange()
-      if (visibleRange) {
-        const barsVisible = visibleRange.to - visibleRange.from
-        const centerOffset = barsVisible / 2
-        chart.timeScale().setVisibleLogicalRange({
-          from: barIndex - centerOffset,
-          to: barIndex + centerOffset,
-        })
-      }
+    if (barIndex < 0) return
+
+    // Check if already visible — skip pan if so
+    const visibleRange = chart.timeScale().getVisibleLogicalRange()
+    if (visibleRange && barIndex >= visibleRange.from && barIndex <= visibleRange.to) return
+
+    // Pan to center
+    if (visibleRange) {
+      const barsVisible = visibleRange.to - visibleRange.from
+      const centerOffset = barsVisible / 2
+      chart.timeScale().setVisibleLogicalRange({
+        from: barIndex - centerOffset,
+        to: barIndex + centerOffset,
+      })
     }
   }, [selectedTradeIndex, trades, candles])
 

@@ -111,8 +111,9 @@ function generateCandles(
   config: TokenPriceConfig,
   interval: number,
   duration: number,
+  endTime: number = END_TIME,
 ): OHLCCandle[] {
-  const startTime = END_TIME - duration
+  const startTime = endTime - duration
   const numCandles = Math.floor(duration / interval)
 
   // Work backwards from endPrice to derive startPrice
@@ -149,10 +150,11 @@ function generateCandles(
   return candles
 }
 
-export function getMockCandles(tokenAddress: string, timeRange?: string): OHLCCandle[] {
+export function getMockCandles(tokenAddress: string, timeRange?: string, centerTime?: number | null): OHLCCandle[] {
   const config = TOKEN_CONFIGS[tokenAddress] ?? TOKEN_CONFIGS['0x2260fac5e5542a773aa44fbcfedf7c193bc2c599']
   const range = RANGE_CONFIGS[timeRange ?? 'max'] ?? RANGE_CONFIGS['max']
-  return generateCandles(config, range.interval, range.duration)
+  const endTime = centerTime ? centerTime + range.duration / 2 : END_TIME
+  return generateCandles(config, range.interval, range.duration, endTime)
 }
 
 // --- Per-token trades ---

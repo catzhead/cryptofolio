@@ -14,7 +14,6 @@ import { useDemo } from './hooks/useDemo'
 import { queryClient } from './queryClient'
 import { MOCK_TOKENS, getMockCandles, getMockTrades } from './lib/mockData'
 import type { TimeRange } from './types'
-import { TIME_RANGE_OPTIONS } from './types'
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state = { error: null as Error | null }
@@ -57,6 +56,7 @@ function Dashboard() {
 
   const [selectedTokenIndex, setSelectedTokenIndex] = useState(0)
   const [timeRange, setTimeRange] = useState<TimeRange>('30')
+  const [centerTime, setCenterTime] = useState<number | null>(null)
 
   const selectedToken = tokens?.[selectedTokenIndex]
 
@@ -68,8 +68,9 @@ function Dashboard() {
   const { data: realCandles } = useOHLC(
     isDemo ? undefined : coinId,
     timeRange,
+    centerTime,
   )
-  const demoCandles = isDemo && selectedToken ? getMockCandles(selectedToken.tokenAddress, timeRange) : undefined
+  const demoCandles = isDemo && selectedToken ? getMockCandles(selectedToken.tokenAddress, timeRange, centerTime) : undefined
   const candles = isDemo ? demoCandles : realCandles
 
   const { data: realTrades, isLoading: tradesLoading, error: tradesError } = useTradeHistory(
@@ -83,25 +84,22 @@ function Dashboard() {
   const { selectedIndex, select, selectPrevious, selectNext, selectLast } =
     useTradeSelection(trades?.length ?? 0)
 
-  // Auto-expand time range when selecting a trade outside current candle window
+  // Shift candle window when selecting a trade outside current range
   useEffect(() => {
-    if (selectedIndex === null || !trades?.[selectedIndex] || !candles?.length) return
+    if (selectedIndex === null || !trades?.[selectedIndex]) {
+      // Deselected — reset to default window
+      if (centerTime !== null) setCenterTime(null)
+      return
+    }
     const tradeSec = Math.floor(new Date(trades[selectedIndex].blockTimestamp).getTime() / 1000)
-    const candleStart = candles[0].time
-    const candleEnd = candles[candles.length - 1].time
-    if (tradeSec >= candleStart && tradeSec <= candleEnd) return
-
-    // Find the smallest time range that covers the trade
-    const now = Date.now() / 1000
-    const tradeAgeDays = (now - tradeSec) / 86400
-    const numericRanges = TIME_RANGE_OPTIONS
-      .filter((r) => r.days !== 'max')
-      .map((r) => ({ ...r, num: parseInt(r.days, 10) }))
-      .sort((a, b) => a.num - b.num)
-
-    const fit = numericRanges.find((r) => r.num >= tradeAgeDays)
-    setTimeRange(fit ? fit.days : 'max')
-  }, [selectedIndex, trades, candles])
+    if (candles?.length) {
+      const candleStart = candles[0].time
+      const candleEnd = candles[candles.length - 1].time
+      // Trade is within current window — no need to shift
+      if (tradeSec >= candleStart && tradeSec <= candleEnd) return
+    }
+    setCenterTime(tradeSec)
+  }, [selectedIndex, trades])
 
   useEffect(() => {
     setSelectedTokenIndex(0)
@@ -186,7 +184,7 @@ function Dashboard() {
 
                 {/* Time range */}
                 <div className="mb-4">
-                  <TimeRangeBar selected={timeRange} onSelect={setTimeRange} />
+                  <TimeRangeBar selected={timeRange} onSelect={(r) => { setTimeRange(r); setCenterTime(null) }} />
                 </div>
 
                 {/* Price chart */}
