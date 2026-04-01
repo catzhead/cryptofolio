@@ -35,46 +35,47 @@ export function useTradeHistory(
         throw new Error(`[2/3 FX rate] ${e instanceof Error ? e.message : e}`)
       }
 
-      const trades = await Promise.all(
-        transfers.map(async (t, i) => {
-          const decimals = parseInt(t.token_decimals, 10)
-          const valueFormatted = parseInt(t.value, 10) / 10 ** decimals
-          const type: 'buy' | 'sell' =
-            t.to_address.toLowerCase() === address!.toLowerCase() ? 'buy' : 'sell'
+      // Process trades sequentially to avoid CoinGecko rate limits
+      const trades: Trade[] = []
+      for (let i = 0; i < transfers.length; i++) {
+        const t = transfers[i]
+        const decimals = parseInt(t.token_decimals, 10)
+        const valueFormatted = parseInt(t.value, 10) / 10 ** decimals
+        const type: 'buy' | 'sell' =
+          t.to_address.toLowerCase() === address!.toLowerCase() ? 'buy' : 'sell'
 
-          const date = t.block_timestamp.split('T')[0]
-          let usdPrice: number, fxRate: number
-          try {
-            ;[usdPrice, fxRate] = await Promise.all([
-              fetchHistoricalPrice(coinId!, date),
-              fetchFXRate(date),
-            ])
-          } catch (e) {
-            throw new Error(`[3/3 enriching trade ${i}, date=${date}] ${e instanceof Error ? e.message : e}`)
-          }
+        const date = t.block_timestamp.split('T')[0]
+        let usdPrice: number, fxRate: number
+        try {
+          ;[usdPrice, fxRate] = await Promise.all([
+            fetchHistoricalPrice(coinId!, date),
+            fetchFXRate(date),
+          ])
+        } catch (e) {
+          throw new Error(`[3/3 enriching trade ${i}, date=${date}] ${e instanceof Error ? e.message : e}`)
+        }
 
-          const usdValue = valueFormatted * usdPrice
-          const sgdThen = usdValue * fxRate
-          const sgdNow = usdValue * currentFXRate
-          const fxImpact = sgdNow - sgdThen
+        const usdValue = valueFormatted * usdPrice
+        const sgdThen = usdValue * fxRate
+        const sgdNow = usdValue * currentFXRate
+        const fxImpact = sgdNow - sgdThen
 
-          return {
-            transactionHash: t.transaction_hash,
-            blockTimestamp: t.block_timestamp,
-            fromAddress: t.from_address,
-            toAddress: t.to_address,
-            value: t.value,
-            valueFormatted,
-            tokenSymbol: t.token_symbol,
-            tokenDecimals: decimals,
-            type,
-            usdValue,
-            sgdThen,
-            sgdNow,
-            fxImpact,
-          }
-        }),
-      )
+        trades.push({
+          transactionHash: t.transaction_hash,
+          blockTimestamp: t.block_timestamp,
+          fromAddress: t.from_address,
+          toAddress: t.to_address,
+          value: t.value,
+          valueFormatted,
+          tokenSymbol: t.token_symbol,
+          tokenDecimals: decimals,
+          type,
+          usdValue,
+          sgdThen,
+          sgdNow,
+          fxImpact,
+        })
+      }
 
       return trades
     },
