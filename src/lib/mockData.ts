@@ -183,8 +183,14 @@ function makeTrade(
 
 // --- Public API ---
 
-export function getMockCandles(tokenAddress: string): OHLCCandle[] {
-  return CANDLES_BY_TOKEN[tokenAddress] ?? CANDLES_BY_TOKEN['0x2260fac5e5542a773aa44fbcfedf7c193bc2c599']
+export function getMockCandles(tokenAddress: string, timeRange?: string): OHLCCandle[] {
+  const allCandles = CANDLES_BY_TOKEN[tokenAddress] ?? CANDLES_BY_TOKEN['0x2260fac5e5542a773aa44fbcfedf7c193bc2c599']
+  if (!timeRange || timeRange === 'max') return allCandles
+
+  const days = parseInt(timeRange, 10)
+  if (isNaN(days)) return allCandles
+
+  return allCandles.slice(-days)
 }
 
 export function getMockTrades(tokenAddress: string): Trade[] {

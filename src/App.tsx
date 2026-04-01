@@ -64,7 +64,8 @@ function Dashboard() {
     isDemo ? undefined : selectedToken?.chain,
     timeRange,
   )
-  const candles = isDemo && selectedToken ? getMockCandles(selectedToken.tokenAddress) : realCandles
+  const demoCandles = isDemo && selectedToken ? getMockCandles(selectedToken.tokenAddress, timeRange) : undefined
+  const candles = isDemo ? demoCandles : realCandles
 
   const { data: realTrades } = useTradeHistory(
     isDemo ? undefined : address,
