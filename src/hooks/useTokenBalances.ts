@@ -19,9 +19,9 @@ export function useTokenBalances(address: string | undefined) {
             decimals: b.decimals,
             balance: b.balance,
             balanceFormatted: b.balance_formatted,
-            usdPrice: b.usd_price,
-            usdValue: b.usd_value,
-            usdPrice24hrPercentChange: b.usd_price_24hr_percent_change,
+            usdPrice: b.usd_price ?? 0,
+            usdValue: b.usd_value ?? 0,
+            usdPrice24hrPercentChange: b.usd_price_24hr_percent_change ?? 0,
             chain: chain.key as ChainKey,
             logo: b.logo ?? undefined,
           }))

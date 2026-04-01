@@ -22,6 +22,7 @@ describe('fetchOHLC', () => {
 
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining('/coins/bitcoin/ohlc?vs_currency=usd&days=7'),
+      expect.any(Object),
     )
     expect(result).toHaveLength(2)
     expect(result[0]).toEqual({
@@ -49,6 +50,7 @@ describe('fetchHistoricalPrice', () => {
 
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining('/coins/bitcoin/history?date=15-03-2024'),
+      expect.any(Object),
     )
     expect(price).toBe(67234.5)
   })

@@ -36,7 +36,7 @@ export function TokenDropdown({ tokens, selectedIndex, onSelect }: TokenDropdown
           <span className="text-slate-400 text-sm">({CHAINS[selected.chain].name})</span>
           <span className="text-slate-300 text-sm">{selected.balanceFormatted}</span>
           <span className="text-slate-400 text-sm">
-            ${selected.usdValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+            ${(selected.usdValue ?? 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}
           </span>
         </div>
         <span className="text-slate-400">{isOpen ? '▲' : '▼'}</span>
@@ -64,7 +64,7 @@ export function TokenDropdown({ tokens, selectedIndex, onSelect }: TokenDropdown
               <div className="flex items-center gap-3">
                 <span className="text-slate-300 text-sm">{token.balanceFormatted}</span>
                 <span className="text-slate-400 text-sm">
-                  ${token.usdValue.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                  ${(token.usdValue ?? 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}
                 </span>
               </div>
             </button>
