@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Component, type ReactNode } from 'react'
 import { useAccount } from 'wagmi'
 import { ConnectButton } from './components/ConnectButton'
 import { PortfolioHeader } from './components/PortfolioHeader'
@@ -10,27 +10,68 @@ import { useTokenBalances } from './hooks/useTokenBalances'
 import { useOHLC } from './hooks/useOHLC'
 import { useTradeHistory } from './hooks/useTradeHistory'
 import { useTradeSelection } from './hooks/useTradeSelection'
+import { useDemo } from './hooks/useDemo'
+import { queryClient } from './queryClient'
+import { MOCK_TOKENS, MOCK_CANDLES, MOCK_TRADES } from './lib/mockData'
 import type { TimeRange } from './types'
 
-export default function App() {
-  const { address, isConnected } = useAccount()
-  const { data: tokens } = useTokenBalances(address)
+class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  state = { error: null as Error | null }
+  static getDerivedStateFromError(error: Error) { return { error } }
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-xl font-bold text-red-400 mb-2">Something went wrong</h2>
+            <p className="text-slate-400 mb-4">{this.state.error.message}</p>
+            <button onClick={() => this.setState({ error: null })} className="bg-rose-600 px-4 py-2 rounded-lg">
+              Try again
+            </button>
+          </div>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+
+function Dashboard() {
+  const isDemo = useDemo()
+
+  const { address: realAddress, isConnected: realConnected } = useAccount()
+  const address = isDemo ? '0xDemo1234567890' : realAddress
+  const isConnected = isDemo ? true : realConnected
+
+  // Cancel real queries when entering demo mode
+  useEffect(() => {
+    if (isDemo) {
+      queryClient.cancelQueries()
+      queryClient.clear()
+    }
+  }, [isDemo])
+
+  const { data: realTokens, isLoading: tokensLoading, error: tokensError } = useTokenBalances(isDemo ? undefined : address)
+  const tokens = isDemo ? MOCK_TOKENS : realTokens
+
   const [selectedTokenIndex, setSelectedTokenIndex] = useState(0)
   const [timeRange, setTimeRange] = useState<TimeRange>('30')
 
   const selectedToken = tokens?.[selectedTokenIndex]
 
-  const { data: candles } = useOHLC(
-    selectedToken?.tokenAddress,
-    selectedToken?.chain,
+  const { data: realCandles } = useOHLC(
+    isDemo ? undefined : selectedToken?.tokenAddress,
+    isDemo ? undefined : selectedToken?.chain,
     timeRange,
   )
+  const candles = isDemo ? MOCK_CANDLES : realCandles
 
-  const { data: trades } = useTradeHistory(
-    address,
-    selectedToken?.chain,
-    selectedToken?.tokenAddress,
+  const { data: realTrades } = useTradeHistory(
+    isDemo ? undefined : address,
+    isDemo ? undefined : selectedToken?.chain,
+    isDemo ? undefined : selectedToken?.tokenAddress,
   )
+  const trades = isDemo ? MOCK_TRADES : realTrades
 
   const { selectedIndex, select, selectPrevious, selectNext, selectLast } =
     useTradeSelection(trades?.length ?? 0)
@@ -77,8 +118,17 @@ export default function App() {
       <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-xl font-bold text-rose-500">CryptoFolio</h1>
-          <ConnectButton />
+          <h1 className="text-xl font-bold text-rose-500">
+            CryptoFolio
+            {isDemo && <span className="ml-2 text-xs bg-yellow-500 text-black px-2 py-0.5 rounded-full">DEMO</span>}
+          </h1>
+          {isDemo ? (
+            <span className="bg-slate-800 text-green-400 px-4 py-2 rounded-lg font-mono text-sm">
+              0xDemo...1234
+            </span>
+          ) : (
+            <ConnectButton />
+          )}
         </div>
 
         {!isConnected ? (
@@ -93,7 +143,11 @@ export default function App() {
             </div>
 
             {/* Token selector */}
-            {tokens && tokens.length > 0 ? (
+            {!isDemo && tokensLoading ? (
+              <p className="text-slate-400">Loading tokens...</p>
+            ) : !isDemo && tokensError ? (
+              <p className="text-red-400">Error loading tokens: {tokensError.message}</p>
+            ) : tokens && tokens.length > 0 ? (
               <>
                 <div className="mb-4">
                   <TokenDropdown
@@ -141,5 +195,13 @@ export default function App() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <Dashboard />
+    </ErrorBoundary>
   )
 }
