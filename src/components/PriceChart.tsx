@@ -127,17 +127,25 @@ export function PriceChart({ candles, trades, selectedTradeIndex, onTradeClick }
   }, [candles, trades])
 
   useEffect(() => {
-    if (selectedTradeIndex === null || !chartRef.current || !trades[selectedTradeIndex]) return
+    if (selectedTradeIndex === null || !chartRef.current || !seriesRef.current || !trades[selectedTradeIndex]) return
 
     const trade = trades[selectedTradeIndex]
-    const targetTime = tradeTimeToCandle(trade.blockTimestamp) as number
-    const dayInSeconds = 86400
-    const offset = 15 * dayInSeconds
+    const targetTime = tradeTimeToCandle(trade.blockTimestamp) as Time
 
-    chartRef.current.timeScale().setVisibleRange({
-      from: (targetTime - offset) as Time,
-      to: (targetTime + offset) as Time,
-    })
+    // Find the bar index for this time and scroll to center it, preserving zoom
+    const data = seriesRef.current.data()
+    const barIndex = data.findIndex((d) => (d.time as number) >= (targetTime as number))
+    if (barIndex >= 0) {
+      const visibleRange = chartRef.current.timeScale().getVisibleLogicalRange()
+      if (visibleRange) {
+        const barsVisible = visibleRange.to - visibleRange.from
+        const centerOffset = barsVisible / 2
+        chartRef.current.timeScale().setVisibleLogicalRange({
+          from: barIndex - centerOffset,
+          to: barIndex + centerOffset,
+        })
+      }
+    }
   }, [selectedTradeIndex, trades])
 
   return (

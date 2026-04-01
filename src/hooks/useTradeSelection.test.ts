@@ -14,6 +14,14 @@ describe('useTradeSelection', () => {
     expect(result.current.selectedIndex).toBe(2)
   })
 
+  it('deselects when clicking the same trade again', () => {
+    const { result } = renderHook(() => useTradeSelection(5))
+    act(() => result.current.select(2))
+    expect(result.current.selectedIndex).toBe(2)
+    act(() => result.current.select(2))
+    expect(result.current.selectedIndex).toBeNull()
+  })
+
   it('selectPrevious moves to previous trade', () => {
     const { result } = renderHook(() => useTradeSelection(5))
     act(() => result.current.select(3))

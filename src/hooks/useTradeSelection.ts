@@ -8,7 +8,7 @@ export function useTradeSelection(tradeCount: number) {
   }, [tradeCount])
 
   const select = useCallback((index: number) => {
-    setSelectedIndex(index)
+    setSelectedIndex((prev) => prev === index ? null : index)
   }, [])
 
   const selectPrevious = useCallback(() => {
