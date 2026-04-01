@@ -32,21 +32,31 @@ function tradeTimeToCandle(timestamp: string, candles: OHLCCandle[]): Time {
 }
 
 function tradesToMarkers(trades: Trade[], candles: OHLCCandle[], selectedIndex: number | null): SeriesMarker<Time>[] {
-  return trades.map((trade, index) => {
-    const isSelected = index === selectedIndex
-    const isBuy = trade.type === 'buy'
-    return {
-      time: tradeTimeToCandle(trade.blockTimestamp, candles),
-      position: isBuy ? 'belowBar' as const : 'aboveBar' as const,
-      color: isSelected
-        ? '#ffffff'
-        : isBuy ? '#4ade80' : '#ef4444',
-      shape: isBuy ? 'arrowUp' as const : 'arrowDown' as const,
-      text: `${isBuy ? 'BUY' : 'SELL'} ${trade.valueFormatted}`,
-      id: String(index),
-      size: isSelected ? 2 : 1,
-    }
-  })
+  if (!candles.length) return []
+  const startTime = candles[0].time
+  const endTime = candles[candles.length - 1].time
+
+  return trades
+    .map((trade, index) => {
+      const tradeSec = Math.floor(new Date(trade.blockTimestamp).getTime() / 1000)
+      // Skip trades outside the candle data range
+      if (tradeSec < startTime || tradeSec > endTime) return null
+
+      const isSelected = index === selectedIndex
+      const isBuy = trade.type === 'buy'
+      return {
+        time: tradeTimeToCandle(trade.blockTimestamp, candles),
+        position: isBuy ? 'belowBar' as const : 'aboveBar' as const,
+        color: isSelected
+          ? '#ffffff'
+          : isBuy ? '#4ade80' : '#ef4444',
+        shape: isBuy ? 'arrowUp' as const : 'arrowDown' as const,
+        text: `${isBuy ? 'BUY' : 'SELL'} ${trade.valueFormatted}`,
+        id: String(index),
+        size: isSelected ? 2 : 1,
+      }
+    })
+    .filter((m): m is SeriesMarker<Time> => m !== null)
 }
 
 interface PingPosition {
