@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from 'react'
+import { useEffect, useRef, useCallback } from 'react'
 import {
   createChart,
   createSeriesMarkers,
@@ -22,7 +22,6 @@ interface PriceChartProps {
 
 function tradeTimeToCandle(timestamp: string, candles: OHLCCandle[]): Time {
   const tradeSec = Math.floor(new Date(timestamp).getTime() / 1000)
-  // Find the closest candle time that is <= the trade time
   let best = candles[0]?.time ?? tradeSec
   for (const c of candles) {
     if (c.time <= tradeSec) best = c.time
@@ -39,7 +38,6 @@ function tradesToMarkers(trades: Trade[], candles: OHLCCandle[], selectedIndex: 
   return trades
     .map((trade, index) => {
       const tradeSec = Math.floor(new Date(trade.blockTimestamp).getTime() / 1000)
-      // Skip trades outside the candle data range
       if (tradeSec < startTime || tradeSec > endTime) return null
 
       const isSelected = index === selectedIndex
@@ -59,18 +57,11 @@ function tradesToMarkers(trades: Trade[], candles: OHLCCandle[], selectedIndex: 
     .filter((m): m is SeriesMarker<Time> => m !== null)
 }
 
-interface PingPosition {
-  x: number
-  y: number
-  key: number
-}
-
 export function PriceChart({ candles, trades, selectedTradeIndex, onTradeClick }: PriceChartProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null)
   const markersRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null)
-  const [ping, setPing] = useState<PingPosition | null>(null)
 
   const handleClick = useCallback(
     (param: any) => {
@@ -160,19 +151,15 @@ export function PriceChart({ candles, trades, selectedTradeIndex, onTradeClick }
     markersRef.current.setMarkers(tradesToMarkers(trades, candles, selectedTradeIndex))
   }, [trades, candles, selectedTradeIndex])
 
-  // Pan to selected trade and show ping
+  // Pan to selected trade
   useEffect(() => {
-    if (selectedTradeIndex === null || !chartRef.current || !seriesRef.current || !trades[selectedTradeIndex]) {
-      setPing(null)
-      return
-    }
+    if (selectedTradeIndex === null || !chartRef.current || !seriesRef.current || !trades[selectedTradeIndex]) return
 
     const chart = chartRef.current
     const series = seriesRef.current
     const trade = trades[selectedTradeIndex]
     const targetTime = tradeTimeToCandle(trade.blockTimestamp, candles) as Time
 
-    // Pan to center on the trade
     const data = series.data()
     const barIndex = data.findIndex((d) => (d.time as number) >= (targetTime as number))
     if (barIndex >= 0) {
@@ -186,51 +173,9 @@ export function PriceChart({ candles, trades, selectedTradeIndex, onTradeClick }
         })
       }
     }
-
-    // Calculate pixel position for the ping
-    const timeCoord = chart.timeScale().timeToCoordinate(targetTime)
-    const bar = data.find((d) => (d.time as number) === (targetTime as number)) as CandlestickData<Time> | undefined
-    if (timeCoord !== null && bar) {
-      const price = trade.type === 'buy' ? bar.low : bar.high
-      const priceCoord = series.priceToCoordinate(price)
-      if (priceCoord !== null) {
-        setPing({ x: timeCoord, y: priceCoord, key: Date.now() })
-      }
-    }
-  }, [selectedTradeIndex, trades])
+  }, [selectedTradeIndex, trades, candles])
 
   return (
-    <div ref={containerRef} className="w-full rounded-lg overflow-hidden relative">
-      {ping && (
-        <div
-          key={ping.key}
-          className="absolute pointer-events-none"
-          style={{ left: ping.x, top: ping.y, transform: 'translate(-50%, -50%)' }}
-        >
-          <div className="w-3 h-3 rounded-full bg-white opacity-80" />
-          <div className="absolute inset-0 w-3 h-3 rounded-full bg-white animate-ping" />
-          <div
-            className="absolute rounded-full border-2 border-white opacity-0"
-            style={{
-              width: 40,
-              height: 40,
-              left: -14,
-              top: -14,
-              animation: 'radar-ring 1s ease-out forwards',
-            }}
-          />
-          <div
-            className="absolute rounded-full border-2 border-white opacity-0"
-            style={{
-              width: 40,
-              height: 40,
-              left: -14,
-              top: -14,
-              animation: 'radar-ring 1s ease-out 0.3s forwards',
-            }}
-          />
-        </div>
-      )}
-    </div>
+    <div ref={containerRef} className="w-full rounded-lg overflow-hidden" />
   )
 }
