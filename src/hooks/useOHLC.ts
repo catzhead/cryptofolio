@@ -44,5 +44,6 @@ export function useOHLC(
       return fetchOHLC(coinId!, days)
     },
     enabled: !!coinId,
+    placeholderData: (prev) => prev,
   })
 }

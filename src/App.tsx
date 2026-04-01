@@ -188,16 +188,20 @@ function Dashboard() {
                 </div>
 
                 {/* Price chart */}
-                {candles && (
-                  <div className="mb-6">
+                <div className="mb-6">
+                  {candles ? (
                     <PriceChart
                       candles={candles}
                       trades={trades ?? []}
                       selectedTradeIndex={selectedIndex}
                       onTradeClick={select}
                     />
-                  </div>
-                )}
+                  ) : (
+                    <div className="w-full h-[400px] rounded-lg bg-[#0a0a1a] flex items-center justify-center">
+                      <div className="text-slate-500 text-sm">Loading chart...</div>
+                    </div>
+                  )}
+                </div>
 
                 {/* Trade table */}
                 {!isDemo && tradesLoading && (
