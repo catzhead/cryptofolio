@@ -35,32 +35,46 @@ export function useTradeHistory(
         throw new Error(`[2/3 FX rate] ${e instanceof Error ? e.message : e}`)
       }
 
-      // Process trades sequentially to avoid CoinGecko rate limits
-      const trades: Trade[] = []
-      for (let i = 0; i < transfers.length; i++) {
-        const t = transfers[i]
+      // Collect unique dates and prefetch prices/FX with throttling
+      const uniqueDates = [...new Set(transfers.map((t) => t.block_timestamp.split('T')[0]))]
+
+      const priceByDate: Record<string, number> = {}
+      const fxByDate: Record<string, number> = {}
+
+      for (const date of uniqueDates) {
+        try {
+          // FX API has no rate limit issues, but CoinGecko does — run sequentially with delay
+          const [usdPrice, fxRate] = await Promise.all([
+            fetchHistoricalPrice(coinId!, date),
+            fetchFXRate(date),
+          ])
+          priceByDate[date] = usdPrice
+          fxByDate[date] = fxRate
+        } catch (e) {
+          throw new Error(`[3/3 fetching price for date=${date}] ${e instanceof Error ? e.message : e}`)
+        }
+        // Throttle: wait between CoinGecko calls to stay under free tier limit
+        if (uniqueDates.length > 1) {
+          await new Promise((r) => setTimeout(r, 1500))
+        }
+      }
+
+      const trades: Trade[] = transfers.map((t) => {
         const decimals = parseInt(t.token_decimals, 10)
         const valueFormatted = parseInt(t.value, 10) / 10 ** decimals
         const type: 'buy' | 'sell' =
           t.to_address.toLowerCase() === address!.toLowerCase() ? 'buy' : 'sell'
 
         const date = t.block_timestamp.split('T')[0]
-        let usdPrice: number, fxRate: number
-        try {
-          ;[usdPrice, fxRate] = await Promise.all([
-            fetchHistoricalPrice(coinId!, date),
-            fetchFXRate(date),
-          ])
-        } catch (e) {
-          throw new Error(`[3/3 enriching trade ${i}, date=${date}] ${e instanceof Error ? e.message : e}`)
-        }
+        const usdPrice = priceByDate[date]
+        const fxRate = fxByDate[date]
 
         const usdValue = valueFormatted * usdPrice
         const sgdThen = usdValue * fxRate
         const sgdNow = usdValue * currentFXRate
         const fxImpact = sgdNow - sgdThen
 
-        trades.push({
+        return {
           transactionHash: t.transaction_hash,
           blockTimestamp: t.block_timestamp,
           fromAddress: t.from_address,
@@ -74,8 +88,8 @@ export function useTradeHistory(
           sgdThen,
           sgdNow,
           fxImpact,
-        })
-      }
+        }
+      })
 
       return trades
     },
