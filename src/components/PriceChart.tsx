@@ -93,6 +93,20 @@ export function PriceChart({ candles, trades, selectedTradeIndex, onTradeClick }
         vertLine: { color: '#ffffff33', style: 3 },
         horzLine: { color: '#ffffff33', style: 3 },
       },
+      localization: {
+        timeFormatter: (time: number) => {
+          const d = new Date(time * 1000)
+          return d.toLocaleString(undefined, {
+            month: 'short', day: 'numeric',
+            hour: '2-digit', minute: '2-digit',
+            hour12: false,
+          })
+        },
+      },
+      timeScale: {
+        timeVisible: true,
+        secondsVisible: false,
+      },
     })
 
     const series = chart.addSeries(CandlestickSeries, {
