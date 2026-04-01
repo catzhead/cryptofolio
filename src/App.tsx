@@ -67,7 +67,7 @@ function Dashboard() {
   const demoCandles = isDemo && selectedToken ? getMockCandles(selectedToken.tokenAddress, timeRange) : undefined
   const candles = isDemo ? demoCandles : realCandles
 
-  const { data: realTrades } = useTradeHistory(
+  const { data: realTrades, isLoading: tradesLoading, error: tradesError } = useTradeHistory(
     isDemo ? undefined : address,
     isDemo ? undefined : selectedToken?.chain,
     isDemo ? undefined : selectedToken?.tokenAddress,
@@ -176,6 +176,12 @@ function Dashboard() {
                 )}
 
                 {/* Trade table */}
+                {!isDemo && tradesLoading && (
+                  <p className="text-slate-400">Loading trade history...</p>
+                )}
+                {!isDemo && tradesError && (
+                  <p className="text-red-400">Error loading trades: {tradesError.message}</p>
+                )}
                 {trades && selectedToken && (
                   <div className="mb-8">
                     <h2 className="text-lg font-bold text-white mb-3">Trade History</h2>
