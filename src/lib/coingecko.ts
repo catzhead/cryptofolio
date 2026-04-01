@@ -55,11 +55,35 @@ export async function fetchHistoricalPrice(
   return data.market_data.current_price.usd
 }
 
+// Native tokens use placeholder addresses from Moralis — map them directly
+const NATIVE_COINGECKO_IDS: Record<string, Record<string, string>> = {
+  ethereum: {
+    '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee': 'ethereum',
+    '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee': 'ethereum',
+  },
+  'polygon-pos': {
+    '0x0000000000000000000000000000000000001010': 'matic-network',
+  },
+  'binance-smart-chain': {
+    '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c': 'wbnb',
+  },
+  'arbitrum-one': {
+    '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee': 'ethereum',
+    '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee': 'ethereum',
+  },
+}
+
 export async function resolveCoingeckoId(
   platform: string,
   contractAddress: string,
 ): Promise<string> {
-  const url = `${BASE}/coins/${platform}/contract/${contractAddress.toLowerCase()}`
+  const addr = contractAddress.toLowerCase()
+
+  // Check native token mapping first
+  const nativeId = NATIVE_COINGECKO_IDS[platform]?.[addr]
+  if (nativeId) return nativeId
+
+  const url = `${BASE}/coins/${platform}/contract/${addr}`
   const res = await fetchWithRetry(url)
   if (!res.ok) throw new Error(`CoinGecko contract lookup error: ${res.status}`)
 
