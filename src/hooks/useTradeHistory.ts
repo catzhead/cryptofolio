@@ -16,16 +16,23 @@ export function useTradeHistory(
       const chainConfig = CHAINS[chain!]
       const native = isNativeToken(chainConfig.coingeckoPlatform, tokenAddress!)
 
-      const transfers = native
-        ? await fetchNativeTransfers(address!, chainConfig.moralisChain)
-        : await fetchTokenTransfers(address!, chainConfig.moralisChain, tokenAddress!)
+      let transfers
+      try {
+        transfers = native
+          ? await fetchNativeTransfers(address!, chainConfig.moralisChain)
+          : await fetchTokenTransfers(address!, chainConfig.moralisChain, tokenAddress!)
+      } catch (e) {
+        throw new Error(`Moralis transfers failed (${native ? 'native' : 'erc20'}, chain=${chainConfig.moralisChain}): ${e instanceof Error ? e.message : e}`)
+      }
 
       if (transfers.length === 0) return []
 
-      const coinId = await resolveCoingeckoId(
-        chainConfig.coingeckoPlatform,
-        tokenAddress!,
-      )
+      let coinId: string
+      try {
+        coinId = await resolveCoingeckoId(chainConfig.coingeckoPlatform, tokenAddress!)
+      } catch (e) {
+        throw new Error(`CoinGecko ID resolution failed: ${e instanceof Error ? e.message : e}`)
+      }
 
       const currentFXRate = await fetchCurrentFXRate()
 
