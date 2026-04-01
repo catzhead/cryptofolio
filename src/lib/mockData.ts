@@ -8,11 +8,10 @@ export const MOCK_TOKENS: TokenBalance[] = [
     decimals: 8,
     balance: '150000000',
     balanceFormatted: '1.5',
-    usdPrice: 67842.15,
-    usdValue: 101763.23,
+    usdPrice: 67842,
+    usdValue: 101763,
     usdPrice24hrPercentChange: 2.34,
     chain: 'ethereum',
-    logo: undefined,
   },
   {
     tokenAddress: '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
@@ -21,11 +20,10 @@ export const MOCK_TOKENS: TokenBalance[] = [
     decimals: 18,
     balance: '4200000000000000000',
     balanceFormatted: '4.2',
-    usdPrice: 3512.88,
-    usdValue: 14754.10,
+    usdPrice: 3512,
+    usdValue: 14754,
     usdPrice24hrPercentChange: -1.12,
     chain: 'ethereum',
-    logo: undefined,
   },
   {
     tokenAddress: '0xff970a61a04b1ca14834a43f5de4533ebddb5cc8',
@@ -35,23 +33,21 @@ export const MOCK_TOKENS: TokenBalance[] = [
     balance: '5200000000',
     balanceFormatted: '5200.00',
     usdPrice: 1.0,
-    usdValue: 5200.0,
+    usdValue: 5200,
     usdPrice24hrPercentChange: 0.01,
     chain: 'arbitrum',
-    logo: undefined,
   },
   {
     tokenAddress: '0x0000000000000000000000000000000000001010',
-    symbol: 'MATIC',
+    symbol: 'POL',
     name: 'Polygon',
     decimals: 18,
     balance: '3500000000000000000000',
     balanceFormatted: '3500.0',
-    usdPrice: 0.8741,
-    usdValue: 3059.35,
+    usdPrice: 0.874,
+    usdValue: 3059,
     usdPrice24hrPercentChange: 3.76,
     chain: 'polygon',
-    logo: undefined,
   },
   {
     tokenAddress: '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c',
@@ -60,143 +56,139 @@ export const MOCK_TOKENS: TokenBalance[] = [
     decimals: 18,
     balance: '2800000000000000000',
     balanceFormatted: '2.8',
-    usdPrice: 412.55,
-    usdValue: 1155.14,
+    usdPrice: 412,
+    usdValue: 1155,
     usdPrice24hrPercentChange: 0.88,
     chain: 'bsc',
-    logo: undefined,
   },
 ]
 
-// ~30 days of daily OHLC candles for WBTC ending ~2026-03-31
-// Starting price ~$60k, trending up to ~$68k
-const BASE_TIME = 1740787200 // 2025-03-01 00:00:00 UTC in seconds
+// --- Candle generation ---
+
 const DAY = 86400
+// 365 days ending ~2026-03-31
+const END_TIME = 1743379200 // 2026-03-31 00:00:00 UTC
+const START_TIME = END_TIME - 365 * DAY
 
-export const MOCK_CANDLES: OHLCCandle[] = [
-  { time: BASE_TIME + DAY * 0,  open: 60120, high: 61200, low: 59800, close: 60850 },
-  { time: BASE_TIME + DAY * 1,  open: 60850, high: 62100, low: 60400, close: 61750 },
-  { time: BASE_TIME + DAY * 2,  open: 61750, high: 62400, low: 61100, close: 61300 },
-  { time: BASE_TIME + DAY * 3,  open: 61300, high: 63000, low: 60900, close: 62780 },
-  { time: BASE_TIME + DAY * 4,  open: 62780, high: 63500, low: 62000, close: 62200 },
-  { time: BASE_TIME + DAY * 5,  open: 62200, high: 64100, low: 61800, close: 63900 },
-  { time: BASE_TIME + DAY * 6,  open: 63900, high: 65200, low: 63200, close: 64750 },
-  { time: BASE_TIME + DAY * 7,  open: 64750, high: 65800, low: 63900, close: 65100 },
-  { time: BASE_TIME + DAY * 8,  open: 65100, high: 65600, low: 63500, close: 63800 },
-  { time: BASE_TIME + DAY * 9,  open: 63800, high: 64200, low: 62400, close: 62900 },
-  { time: BASE_TIME + DAY * 10, open: 62900, high: 63700, low: 61800, close: 63400 },
-  { time: BASE_TIME + DAY * 11, open: 63400, high: 64900, low: 63000, close: 64600 },
-  { time: BASE_TIME + DAY * 12, open: 64600, high: 66100, low: 64200, close: 65800 },
-  { time: BASE_TIME + DAY * 13, open: 65800, high: 67200, low: 65400, close: 66900 },
-  { time: BASE_TIME + DAY * 14, open: 66900, high: 67800, low: 65900, close: 66400 },
-  { time: BASE_TIME + DAY * 15, open: 66400, high: 67100, low: 65200, close: 65600 },
-  { time: BASE_TIME + DAY * 16, open: 65600, high: 66300, low: 64800, close: 65200 },
-  { time: BASE_TIME + DAY * 17, open: 65200, high: 66800, low: 64900, close: 66500 },
-  { time: BASE_TIME + DAY * 18, open: 66500, high: 68000, low: 66100, close: 67700 },
-  { time: BASE_TIME + DAY * 19, open: 67700, high: 68900, low: 67200, close: 68400 },
-  { time: BASE_TIME + DAY * 20, open: 68400, high: 69200, low: 67800, close: 67900 },
-  { time: BASE_TIME + DAY * 21, open: 67900, high: 68500, low: 66900, close: 67300 },
-  { time: BASE_TIME + DAY * 22, open: 67300, high: 68100, low: 66700, close: 67800 },
-  { time: BASE_TIME + DAY * 23, open: 67800, high: 68600, low: 67100, close: 68200 },
-  { time: BASE_TIME + DAY * 24, open: 68200, high: 69500, low: 67900, close: 69100 },
-  { time: BASE_TIME + DAY * 25, open: 69100, high: 70200, low: 68500, close: 69800 },
-  { time: BASE_TIME + DAY * 26, open: 69800, high: 70500, low: 68900, close: 69200 },
-  { time: BASE_TIME + DAY * 27, open: 69200, high: 69900, low: 67800, close: 68500 },
-  { time: BASE_TIME + DAY * 28, open: 68500, high: 69100, low: 67400, close: 67842 },
-  { time: BASE_TIME + DAY * 29, open: 67842, high: 68500, low: 67200, close: 67842 },
-]
+function generateCandles(
+  startPrice: number,
+  volatility: number,
+  trend: number,
+  days: number,
+): OHLCCandle[] {
+  const candles: OHLCCandle[] = []
+  let price = startPrice
+  // Seeded pseudo-random for determinism
+  let seed = Math.round(startPrice * 100)
+  function rand() {
+    seed = (seed * 16807 + 0) % 2147483647
+    return (seed & 0x7fffffff) / 0x7fffffff
+  }
 
-export const MOCK_TRADES: Trade[] = [
-  {
-    transactionHash: '0xdemo0001aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0001',
-    blockTimestamp: '2025-09-15T10:23:45.000Z',
-    fromAddress: '0x0000000000000000000000000000000000000000',
-    toAddress: '0xDemo1234567890',
-    value: '50000000',
-    valueFormatted: 0.5,
-    tokenSymbol: 'WBTC',
-    tokenDecimals: 8,
-    type: 'buy',
-    usdValue: 29500.0,
-    sgdThen: 39915.0,
-    sgdNow: 39536.3,
-    fxImpact: -378.7,
-  },
-  {
-    transactionHash: '0xdemo0002bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb0002',
-    blockTimestamp: '2025-10-22T14:05:12.000Z',
-    fromAddress: '0x0000000000000000000000000000000000000000',
-    toAddress: '0xDemo1234567890',
-    value: '100000000',
-    valueFormatted: 1.0,
-    tokenSymbol: 'WBTC',
-    tokenDecimals: 8,
-    type: 'buy',
-    usdValue: 62100.0,
-    sgdThen: 83897.1,
-    sgdNow: 83179.4,
-    fxImpact: -717.7,
-  },
-  {
-    transactionHash: '0xdemo0003cccccccccccccccccccccccccccccccccccccccccccccccccccc0003',
-    blockTimestamp: '2025-11-30T08:44:30.000Z',
-    fromAddress: '0xDemo1234567890',
-    toAddress: '0x0000000000000000000000000000000000000000',
-    value: '25000000',
-    valueFormatted: 0.25,
-    tokenSymbol: 'WBTC',
-    tokenDecimals: 8,
-    type: 'sell',
-    usdValue: 17562.5,
-    sgdThen: 23784.0,
-    sgdNow: 23532.75,
-    fxImpact: -251.25,
-  },
-  {
-    transactionHash: '0xdemo0004dddddddddddddddddddddddddddddddddddddddddddddddddddd0004',
-    blockTimestamp: '2026-01-08T16:20:00.000Z',
-    fromAddress: '0x0000000000000000000000000000000000000000',
-    toAddress: '0xDemo1234567890',
-    value: '75000000',
-    valueFormatted: 0.75,
-    tokenSymbol: 'WBTC',
-    tokenDecimals: 8,
-    type: 'buy',
-    usdValue: 49500.0,
-    sgdThen: 66825.0,
-    sgdNow: 66303.0,
-    fxImpact: -522.0,
-  },
-  {
-    transactionHash: '0xdemo0005eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee0005',
-    blockTimestamp: '2026-02-14T09:15:22.000Z',
-    fromAddress: '0xDemo1234567890',
-    toAddress: '0x0000000000000000000000000000000000000000',
-    value: '20000000',
-    valueFormatted: 0.2,
-    tokenSymbol: 'WBTC',
-    tokenDecimals: 8,
-    type: 'sell',
-    usdValue: 13600.0,
-    sgdThen: 18360.0,
-    sgdNow: 18224.0,
-    fxImpact: -136.0,
-  },
-  {
-    transactionHash: '0xdemo0006ffffffffffffffffffffffffffffffffffffffffffffffffffffffff0006',
-    blockTimestamp: '2026-03-20T11:30:00.000Z',
-    fromAddress: '0x0000000000000000000000000000000000000000',
-    toAddress: '0xDemo1234567890',
-    value: '100000000',
-    valueFormatted: 1.0,
-    tokenSymbol: 'WBTC',
-    tokenDecimals: 8,
-    type: 'buy',
-    usdValue: 67842.15,
-    sgdThen: 90905.28,
-    sgdNow: 90908.48,
-    fxImpact: 3.2,
-  },
-]
+  for (let i = 0; i < days; i++) {
+    const dailyTrend = trend / days
+    const change = (rand() - 0.48) * volatility + dailyTrend * price
+    const open = price
+    const close = Math.max(open * 0.8, open + change)
+    const high = Math.max(open, close) * (1 + rand() * volatility * 0.3)
+    const low = Math.min(open, close) * (1 - rand() * volatility * 0.3)
+    candles.push({
+      time: START_TIME + i * DAY,
+      open: Math.round(open * 100) / 100,
+      high: Math.round(high * 100) / 100,
+      low: Math.round(low * 100) / 100,
+      close: Math.round(close * 100) / 100,
+    })
+    price = close
+  }
+  return candles
+}
+
+// Per-token candle data: 365 daily candles each
+const CANDLES_BY_TOKEN: Record<string, OHLCCandle[]> = {
+  // WBTC: ~$45k → ~$68k over a year
+  '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599': generateCandles(45000, 0.025, 0.5, 365),
+  // ETH: ~$2200 → ~$3500
+  '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee': generateCandles(2200, 0.03, 0.6, 365),
+  // USDC: ~$1.00 stable
+  '0xff970a61a04b1ca14834a43f5de4533ebddb5cc8': generateCandles(1.0, 0.001, 0.0, 365),
+  // POL: ~$0.50 → ~$0.87
+  '0x0000000000000000000000000000000000001010': generateCandles(0.50, 0.04, 0.7, 365),
+  // WBNB: ~$280 → ~$412
+  '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c': generateCandles(280, 0.028, 0.45, 365),
+}
+
+// --- Per-token trades ---
+
+const TRADES_BY_TOKEN: Record<string, Trade[]> = {
+  '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599': [
+    makeTrade('0xwbtc01', '2025-06-15T10:23:45.000Z', 'buy', 0.5, 'WBTC', 8, 29500, 1.35, 1.34),
+    makeTrade('0xwbtc02', '2025-08-22T14:05:12.000Z', 'buy', 1.0, 'WBTC', 8, 52100, 1.36, 1.34),
+    makeTrade('0xwbtc03', '2025-11-30T08:44:30.000Z', 'sell', 0.25, 'WBTC', 8, 15800, 1.33, 1.34),
+    makeTrade('0xwbtc04', '2026-01-08T16:20:00.000Z', 'buy', 0.5, 'WBTC', 8, 31200, 1.35, 1.34),
+    makeTrade('0xwbtc05', '2026-02-14T09:15:22.000Z', 'sell', 0.25, 'WBTC', 8, 16900, 1.34, 1.34),
+    makeTrade('0xwbtc06', '2026-03-20T11:30:00.000Z', 'buy', 0.5, 'WBTC', 8, 33900, 1.34, 1.34),
+  ],
+  '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee': [
+    makeTrade('0xeth01', '2025-05-10T09:00:00.000Z', 'buy', 2.0, 'ETH', 18, 5200, 1.36, 1.34),
+    makeTrade('0xeth02', '2025-07-18T15:30:00.000Z', 'buy', 1.5, 'ETH', 18, 4350, 1.35, 1.34),
+    makeTrade('0xeth03', '2025-10-05T12:00:00.000Z', 'sell', 0.8, 'ETH', 18, 2480, 1.33, 1.34),
+    makeTrade('0xeth04', '2026-01-20T10:45:00.000Z', 'buy', 1.5, 'ETH', 18, 4800, 1.35, 1.34),
+  ],
+  '0xff970a61a04b1ca14834a43f5de4533ebddb5cc8': [
+    makeTrade('0xusdc01', '2025-04-01T08:00:00.000Z', 'buy', 3000, 'USDC', 6, 3000, 1.36, 1.34),
+    makeTrade('0xusdc02', '2025-09-15T14:00:00.000Z', 'buy', 2200, 'USDC', 6, 2200, 1.34, 1.34),
+  ],
+  '0x0000000000000000000000000000000000001010': [
+    makeTrade('0xpol01', '2025-06-01T11:00:00.000Z', 'buy', 2000, 'POL', 18, 1100, 1.35, 1.34),
+    makeTrade('0xpol02', '2025-08-20T16:00:00.000Z', 'buy', 1500, 'POL', 18, 1050, 1.36, 1.34),
+    makeTrade('0xpol03', '2026-02-10T09:30:00.000Z', 'sell', 500, 'POL', 18, 400, 1.33, 1.34),
+  ],
+  '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c': [
+    makeTrade('0xbnb01', '2025-07-05T10:00:00.000Z', 'buy', 1.5, 'WBNB', 18, 450, 1.35, 1.34),
+    makeTrade('0xbnb02', '2025-12-01T13:00:00.000Z', 'buy', 1.3, 'WBNB', 18, 480, 1.34, 1.34),
+    makeTrade('0xbnb03', '2026-03-10T08:00:00.000Z', 'sell', 0.5, 'WBNB', 18, 206, 1.34, 1.34),
+  ],
+}
+
+function makeTrade(
+  hash: string,
+  timestamp: string,
+  type: 'buy' | 'sell',
+  amount: number,
+  symbol: string,
+  decimals: number,
+  usdValue: number,
+  fxThen: number,
+  fxNow: number,
+): Trade {
+  const sgdThen = Math.round(usdValue * fxThen * 100) / 100
+  const sgdNow = Math.round(usdValue * fxNow * 100) / 100
+  return {
+    transactionHash: hash.padEnd(66, '0'),
+    blockTimestamp: timestamp,
+    fromAddress: type === 'buy' ? '0x0000000000000000000000000000000000000000' : '0xDemo1234567890',
+    toAddress: type === 'buy' ? '0xDemo1234567890' : '0x0000000000000000000000000000000000000000',
+    value: String(amount * 10 ** decimals),
+    valueFormatted: amount,
+    tokenSymbol: symbol,
+    tokenDecimals: decimals,
+    type,
+    usdValue,
+    sgdThen,
+    sgdNow,
+    fxImpact: Math.round((sgdNow - sgdThen) * 100) / 100,
+  }
+}
+
+// --- Public API ---
+
+export function getMockCandles(tokenAddress: string): OHLCCandle[] {
+  return CANDLES_BY_TOKEN[tokenAddress] ?? CANDLES_BY_TOKEN['0x2260fac5e5542a773aa44fbcfedf7c193bc2c599']
+}
+
+export function getMockTrades(tokenAddress: string): Trade[] {
+  return TRADES_BY_TOKEN[tokenAddress] ?? []
+}
 
 export const MOCK_FX_RATE = 1.34

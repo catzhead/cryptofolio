@@ -12,7 +12,7 @@ import { useTradeHistory } from './hooks/useTradeHistory'
 import { useTradeSelection } from './hooks/useTradeSelection'
 import { useDemo } from './hooks/useDemo'
 import { queryClient } from './queryClient'
-import { MOCK_TOKENS, MOCK_CANDLES, MOCK_TRADES } from './lib/mockData'
+import { MOCK_TOKENS, getMockCandles, getMockTrades } from './lib/mockData'
 import type { TimeRange } from './types'
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -64,14 +64,14 @@ function Dashboard() {
     isDemo ? undefined : selectedToken?.chain,
     timeRange,
   )
-  const candles = isDemo ? MOCK_CANDLES : realCandles
+  const candles = isDemo && selectedToken ? getMockCandles(selectedToken.tokenAddress) : realCandles
 
   const { data: realTrades } = useTradeHistory(
     isDemo ? undefined : address,
     isDemo ? undefined : selectedToken?.chain,
     isDemo ? undefined : selectedToken?.tokenAddress,
   )
-  const trades = isDemo ? MOCK_TRADES : realTrades
+  const trades = isDemo && selectedToken ? getMockTrades(selectedToken.tokenAddress) : realTrades
 
   const { selectedIndex, select, selectPrevious, selectNext, selectLast } =
     useTradeSelection(trades?.length ?? 0)
