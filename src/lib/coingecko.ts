@@ -55,6 +55,49 @@ export async function fetchHistoricalPrice(
   return data.market_data.current_price.usd
 }
 
+// Fetch full price history for a date range in a single call
+// Returns a map of ISO date → USD price (closest daily price)
+export async function fetchPriceRange(
+  coinId: string,
+  fromUnix: number,
+  toUnix: number,
+): Promise<Map<string, number>> {
+  const url = `${BASE}/coins/${coinId}/market_chart/range?vs_currency=usd&from=${fromUnix}&to=${toUnix}`
+  const res = await fetchWithRetry(url)
+  if (!res.ok) throw new Error(`CoinGecko price range error: ${res.status}`)
+
+  const data: { prices: [number, number][] } = await res.json()
+  const priceMap = new Map<string, number>()
+
+  for (const [timestampMs, price] of data.prices) {
+    const date = new Date(timestampMs).toISOString().split('T')[0]
+    // Keep the last price point for each date (closest to end of day)
+    priceMap.set(date, price)
+  }
+
+  return priceMap
+}
+
+// Look up price for a date from a pre-fetched price map
+// Falls back to nearest available date
+export function lookupPrice(priceMap: Map<string, number>, isoDate: string): number {
+  const exact = priceMap.get(isoDate)
+  if (exact !== undefined) return exact
+
+  // Find nearest date
+  const target = new Date(isoDate).getTime()
+  let bestDate = ''
+  let bestDist = Infinity
+  for (const [date] of priceMap) {
+    const dist = Math.abs(new Date(date).getTime() - target)
+    if (dist < bestDist) {
+      bestDist = dist
+      bestDate = date
+    }
+  }
+  return priceMap.get(bestDate) ?? 0
+}
+
 // Native tokens use placeholder addresses from Moralis — map them directly
 const NATIVE_COINGECKO_IDS: Record<string, Record<string, string>> = {
   ethereum: {

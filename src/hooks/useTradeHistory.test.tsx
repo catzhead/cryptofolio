@@ -38,7 +38,10 @@ describe('useTradeHistory', () => {
         token_decimals: '8',
       },
     ])
-    vi.mocked(coingecko.fetchHistoricalPrice).mockResolvedValue(67000)
+    vi.mocked(coingecko.fetchPriceRange).mockResolvedValue(
+      new Map([['2024-03-15', 67000]])
+    )
+    vi.mocked(coingecko.lookupPrice).mockReturnValue(67000)
     vi.mocked(fx.fetchFXRate).mockResolvedValue(1.34)
     vi.mocked(fx.fetchCurrentFXRate).mockResolvedValue(1.32)
 
@@ -49,6 +52,7 @@ describe('useTradeHistory', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
 
+    expect(coingecko.fetchPriceRange).toHaveBeenCalledTimes(1)
     const trade = result.current.data![0]
     expect(trade.type).toBe('buy')
     expect(trade.valueFormatted).toBe(0.5)
@@ -71,7 +75,10 @@ describe('useTradeHistory', () => {
         token_decimals: '18',
       },
     ])
-    vi.mocked(coingecko.fetchHistoricalPrice).mockResolvedValue(3500)
+    vi.mocked(coingecko.fetchPriceRange).mockResolvedValue(
+      new Map([['2024-06-10', 3500]])
+    )
+    vi.mocked(coingecko.lookupPrice).mockReturnValue(3500)
     vi.mocked(fx.fetchFXRate).mockResolvedValue(1.35)
     vi.mocked(fx.fetchCurrentFXRate).mockResolvedValue(1.34)
 
@@ -84,8 +91,24 @@ describe('useTradeHistory', () => {
 
     expect(moralis.fetchNativeTransfers).toHaveBeenCalled()
     expect(moralis.fetchTokenTransfers).not.toHaveBeenCalled()
+    expect(coingecko.fetchPriceRange).toHaveBeenCalledTimes(1)
     const trade = result.current.data![0]
     expect(trade.type).toBe('buy')
     expect(trade.tokenSymbol).toBe('ETH')
+  })
+
+  it('returns empty array when no transfers found', async () => {
+    vi.mocked(coingecko.isNativeToken).mockReturnValue(false)
+    vi.mocked(moralis.fetchTokenTransfers).mockResolvedValue([])
+
+    const { result } = renderHook(
+      () => useTradeHistory('0x1234', 'ethereum', '0xabc', 'wrapped-bitcoin'),
+      { wrapper: createWrapper() },
+    )
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+
+    expect(result.current.data).toEqual([])
+    expect(coingecko.fetchPriceRange).not.toHaveBeenCalled()
   })
 })

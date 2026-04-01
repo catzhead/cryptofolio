@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { fetchTokenTransfers, fetchNativeTransfers } from '../lib/moralis'
-import { fetchHistoricalPrice, isNativeToken } from '../lib/coingecko'
+import { fetchPriceRange, lookupPrice, isNativeToken } from '../lib/coingecko'
 import { fetchFXRate, fetchCurrentFXRate } from '../lib/fx'
 import { CHAINS } from '../lib/chains'
 import type { ChainKey, Trade } from '../types'
@@ -17,56 +17,35 @@ export function useTradeHistory(
       const chainConfig = CHAINS[chain!]
       const native = isNativeToken(chainConfig.coingeckoPlatform, tokenAddress!)
 
-      let transfers
-      try {
-        transfers = native
-          ? await fetchNativeTransfers(address!, chainConfig.moralisChain)
-          : await fetchTokenTransfers(address!, chainConfig.moralisChain, tokenAddress!)
-      } catch (e) {
-        throw new Error(`[1/3 Moralis ${native ? 'native' : 'erc20'}] ${e instanceof Error ? e.message : e}`)
-      }
+      const transfers = native
+        ? await fetchNativeTransfers(address!, chainConfig.moralisChain)
+        : await fetchTokenTransfers(address!, chainConfig.moralisChain, tokenAddress!)
 
       if (transfers.length === 0) return []
 
-      let currentFXRate: number
-      try {
-        currentFXRate = await fetchCurrentFXRate()
-      } catch (e) {
-        throw new Error(`[2/3 FX rate] ${e instanceof Error ? e.message : e}`)
-      }
+      // Single CoinGecko call for the entire date range
+      const timestamps = transfers.map((t) => Math.floor(new Date(t.block_timestamp).getTime() / 1000))
+      const fromUnix = Math.min(...timestamps) - 86400 // 1 day buffer
+      const toUnix = Math.max(...timestamps) + 86400
+      const priceMap = await fetchPriceRange(coinId!, fromUnix, toUnix)
 
-      // Collect unique dates and prefetch prices/FX with throttling
+      // Fetch FX rates — Frankfurter has no rate limit issues
       const uniqueDates = [...new Set(transfers.map((t) => t.block_timestamp.split('T')[0]))]
-
-      const priceByDate: Record<string, number> = {}
+      const [currentFXRate, ...fxRates] = await Promise.all([
+        fetchCurrentFXRate(),
+        ...uniqueDates.map((d) => fetchFXRate(d)),
+      ])
       const fxByDate: Record<string, number> = {}
+      uniqueDates.forEach((d, i) => { fxByDate[d] = fxRates[i] })
 
-      for (const date of uniqueDates) {
-        try {
-          // FX API has no rate limit issues, but CoinGecko does — run sequentially with delay
-          const [usdPrice, fxRate] = await Promise.all([
-            fetchHistoricalPrice(coinId!, date),
-            fetchFXRate(date),
-          ])
-          priceByDate[date] = usdPrice
-          fxByDate[date] = fxRate
-        } catch (e) {
-          throw new Error(`[3/3 fetching price for date=${date}] ${e instanceof Error ? e.message : e}`)
-        }
-        // Throttle: wait between CoinGecko calls to stay under free tier limit
-        if (uniqueDates.length > 1) {
-          await new Promise((r) => setTimeout(r, 1500))
-        }
-      }
-
-      const trades: Trade[] = transfers.map((t) => {
+      return transfers.map((t) => {
         const decimals = parseInt(t.token_decimals, 10)
         const valueFormatted = parseInt(t.value, 10) / 10 ** decimals
         const type: 'buy' | 'sell' =
           t.to_address.toLowerCase() === address!.toLowerCase() ? 'buy' : 'sell'
 
         const date = t.block_timestamp.split('T')[0]
-        const usdPrice = priceByDate[date]
+        const usdPrice = lookupPrice(priceMap, date)
         const fxRate = fxByDate[date]
 
         const usdValue = valueFormatted * usdPrice
@@ -90,8 +69,6 @@ export function useTradeHistory(
           fxImpact,
         }
       })
-
-      return trades
     },
     enabled: !!address && !!chain && !!tokenAddress && !!coinId,
     retry: 1,
