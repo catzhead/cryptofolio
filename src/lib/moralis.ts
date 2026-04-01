@@ -11,22 +11,34 @@ interface MoralisTokenBalance {
   decimals: number
   balance: string
   balance_formatted: string
-  usd_price: number
-  usd_price_24hr_percent_change: number
-  usd_value: number
+  usd_price: number | null
+  usd_price_24hr_percent_change: number | null
+  usd_value: number | null
   logo: string | null
   possible_spam: boolean
+  native_token: boolean
+  portfolio_percentage: number
+}
+
+interface MoralisWalletTokensResponse {
+  result: MoralisTokenBalance[]
+  cursor: string | null
 }
 
 export async function fetchTokenBalances(
   address: string,
   chain: string,
 ): Promise<MoralisTokenBalance[]> {
-  const url = `${MORALIS_BASE}/${address}/erc20?chain=${chain}&exclude_spam=true`
+  const params = new URLSearchParams({
+    chain,
+    exclude_spam: 'true',
+    exclude_unverified_contracts: 'true',
+  })
+  const url = `${MORALIS_BASE}/wallets/${address}/tokens?${params}`
   const res = await fetch(url, { headers: headers() })
   if (!res.ok) throw new Error(`Moralis balances error: ${res.status}`)
-  const data: MoralisTokenBalance[] = await res.json()
-  return data.filter((t) => !t.possible_spam)
+  const data: MoralisWalletTokensResponse = await res.json()
+  return data.result.filter((t) => !t.possible_spam)
 }
 
 interface MoralisTransferResponse {

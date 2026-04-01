@@ -9,30 +9,35 @@ beforeEach(() => {
 })
 
 describe('fetchTokenBalances', () => {
-  it('fetches ERC20 balances for an address on a chain', async () => {
+  it('fetches token balances including native tokens', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => [
-        {
-          token_address: '0xabc',
-          symbol: 'WBTC',
-          name: 'Wrapped Bitcoin',
-          decimals: 8,
-          balance: '100000000',
-          balance_formatted: '1.0',
-          usd_price: 67000,
-          usd_price_24hr_percent_change: 2.5,
-          usd_value: 67000,
-          logo: null,
-          possible_spam: false,
-        },
-      ],
+      json: async () => ({
+        result: [
+          {
+            token_address: '0xabc',
+            symbol: 'WBTC',
+            name: 'Wrapped Bitcoin',
+            decimals: 8,
+            balance: '100000000',
+            balance_formatted: '1.0',
+            usd_price: 67000,
+            usd_price_24hr_percent_change: 2.5,
+            usd_value: 67000,
+            logo: null,
+            possible_spam: false,
+            native_token: false,
+            portfolio_percentage: 90,
+          },
+        ],
+        cursor: null,
+      }),
     })
 
     const result = await fetchTokenBalances('0x1234', 'eth')
 
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining('/api/v2.2/0x1234/erc20'),
+      expect.stringContaining('/wallets/0x1234/tokens'),
       expect.objectContaining({
         headers: expect.objectContaining({ 'X-API-Key': expect.any(String) }),
       }),
@@ -45,10 +50,13 @@ describe('fetchTokenBalances', () => {
   it('filters out spam tokens', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => [
-        { token_address: '0xabc', symbol: 'WBTC', possible_spam: false, balance_formatted: '1.0', decimals: 8, balance: '100000000', usd_price: 67000, usd_price_24hr_percent_change: 0, usd_value: 67000, name: 'Wrapped Bitcoin' },
-        { token_address: '0xspam', symbol: 'SCAM', possible_spam: true, balance_formatted: '999', decimals: 18, balance: '999000000000000000000', usd_price: 0, usd_price_24hr_percent_change: 0, usd_value: 0, name: 'Scam Token' },
-      ],
+      json: async () => ({
+        result: [
+          { token_address: '0xabc', symbol: 'WBTC', possible_spam: false, balance_formatted: '1.0', decimals: 8, balance: '100000000', usd_price: 67000, usd_price_24hr_percent_change: 0, usd_value: 67000, name: 'Wrapped Bitcoin', native_token: false, portfolio_percentage: 90 },
+          { token_address: '0xspam', symbol: 'SCAM', possible_spam: true, balance_formatted: '999', decimals: 18, balance: '999000000000000000000', usd_price: 0, usd_price_24hr_percent_change: 0, usd_value: 0, name: 'Scam Token', native_token: false, portfolio_percentage: 10 },
+        ],
+        cursor: null,
+      }),
     })
 
     const result = await fetchTokenBalances('0x1234', 'eth')
