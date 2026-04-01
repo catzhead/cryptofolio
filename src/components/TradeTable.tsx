@@ -1,4 +1,3 @@
-import { useRef, useEffect } from 'react'
 import type { Trade } from '../types'
 
 interface TradeTableProps {
@@ -26,17 +25,6 @@ function formatAmount(value: number): string {
 }
 
 export function TradeTable({ trades, tokenSymbol, currentValue, selectedIndex, onRowClick }: TradeTableProps) {
-  const rowRefs = useRef<(HTMLTableRowElement | null)[]>([])
-
-  useEffect(() => {
-    if (selectedIndex !== null && rowRefs.current[selectedIndex]) {
-      rowRefs.current[selectedIndex]!.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-      })
-    }
-  }, [selectedIndex])
-
   let runningAmount = 0
   let runningUsd = 0
   let runningSgdThen = 0
@@ -57,7 +45,6 @@ export function TradeTable({ trades, tokenSymbol, currentValue, selectedIndex, o
     return (
       <tr
         key={trade.transactionHash}
-        ref={(el) => { rowRefs.current[index] = el }}
         onClick={() => onRowClick(index)}
         role="row"
         className={`cursor-pointer hover:bg-slate-800/50 transition-colors ${highlight}`}
