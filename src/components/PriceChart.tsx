@@ -20,18 +20,23 @@ interface PriceChartProps {
   onTradeClick: (index: number) => void
 }
 
-function tradeTimeToCandle(timestamp: string): Time {
-  const ms = new Date(timestamp).getTime()
-  const dayMs = 86400 * 1000
-  return (Math.floor(ms / dayMs) * dayMs / 1000) as Time
+function tradeTimeToCandle(timestamp: string, candles: OHLCCandle[]): Time {
+  const tradeSec = Math.floor(new Date(timestamp).getTime() / 1000)
+  // Find the closest candle time that is <= the trade time
+  let best = candles[0]?.time ?? tradeSec
+  for (const c of candles) {
+    if (c.time <= tradeSec) best = c.time
+    else break
+  }
+  return best as Time
 }
 
-function tradesToMarkers(trades: Trade[], selectedIndex: number | null): SeriesMarker<Time>[] {
+function tradesToMarkers(trades: Trade[], candles: OHLCCandle[], selectedIndex: number | null): SeriesMarker<Time>[] {
   return trades.map((trade, index) => {
     const isSelected = index === selectedIndex
     const isBuy = trade.type === 'buy'
     return {
-      time: tradeTimeToCandle(trade.blockTimestamp),
+      time: tradeTimeToCandle(trade.blockTimestamp, candles),
       position: isBuy ? 'belowBar' as const : 'aboveBar' as const,
       color: isSelected
         ? '#ffffff'
@@ -142,8 +147,8 @@ export function PriceChart({ candles, trades, selectedTradeIndex, onTradeClick }
   // Update markers when trades or selection changes
   useEffect(() => {
     if (!markersRef.current) return
-    markersRef.current.setMarkers(tradesToMarkers(trades, selectedTradeIndex))
-  }, [trades, selectedTradeIndex])
+    markersRef.current.setMarkers(tradesToMarkers(trades, candles, selectedTradeIndex))
+  }, [trades, candles, selectedTradeIndex])
 
   // Pan to selected trade and show ping
   useEffect(() => {
@@ -155,7 +160,7 @@ export function PriceChart({ candles, trades, selectedTradeIndex, onTradeClick }
     const chart = chartRef.current
     const series = seriesRef.current
     const trade = trades[selectedTradeIndex]
-    const targetTime = tradeTimeToCandle(trade.blockTimestamp) as Time
+    const targetTime = tradeTimeToCandle(trade.blockTimestamp, candles) as Time
 
     // Pan to center on the trade
     const data = series.data()

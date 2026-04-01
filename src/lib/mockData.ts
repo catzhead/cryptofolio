@@ -1,4 +1,4 @@
-import type { TokenBalance, Trade, OHLCCandle } from '../types'
+import type { TokenBalance, Trade, OHLCCandle, TimeRange } from '../types'
 
 export const MOCK_TOKENS: TokenBalance[] = [
   {
@@ -65,35 +65,79 @@ export const MOCK_TOKENS: TokenBalance[] = [
 
 // --- Candle generation ---
 
-const DAY = 86400
-// 365 days ending ~2026-03-31
 const END_TIME = 1774915200 // 2026-03-31 00:00:00 UTC
-const START_TIME = END_TIME - 365 * DAY
+
+// Time range → candle interval (seconds) and duration (seconds)
+interface RangeConfig {
+  interval: number  // candle width in seconds
+  duration: number  // total time window in seconds
+}
+
+const RANGE_CONFIGS: Record<string, RangeConfig> = {
+  '1':   { interval: 300,    duration: 86400 },       // 1D: 5-min candles
+  '7':   { interval: 1800,   duration: 7 * 86400 },   // 1W: 30-min candles
+  '14':  { interval: 3600,   duration: 14 * 86400 },  // 2W: 1-hour candles
+  '30':  { interval: 14400,  duration: 30 * 86400 },  // 1M: 4-hour candles
+  '90':  { interval: 86400,  duration: 90 * 86400 },  // 3M: daily candles
+  '180': { interval: 86400,  duration: 180 * 86400 }, // 6M: daily candles
+  '365': { interval: 86400,  duration: 365 * 86400 }, // 1Y: daily candles
+  'max': { interval: 86400,  duration: 365 * 86400 }, // ALL: daily candles
+}
+
+// Seeded PRNG for deterministic data
+function createRng(seed: number) {
+  let s = seed
+  return () => {
+    s = (s * 16807 + 0) % 2147483647
+    return (s & 0x7fffffff) / 0x7fffffff
+  }
+}
+
+interface TokenPriceConfig {
+  endPrice: number
+  volatility: number
+  yearlyTrend: number // fraction: 0.5 = 50% up over a year
+}
+
+const TOKEN_CONFIGS: Record<string, TokenPriceConfig> = {
+  '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599': { endPrice: 67842, volatility: 0.025, yearlyTrend: 0.5 },
+  '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee': { endPrice: 3512, volatility: 0.03, yearlyTrend: 0.6 },
+  '0xff970a61a04b1ca14834a43f5de4533ebddb5cc8': { endPrice: 1.0, volatility: 0.001, yearlyTrend: 0.0 },
+  '0x0000000000000000000000000000000000001010': { endPrice: 0.874, volatility: 0.04, yearlyTrend: 0.7 },
+  '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c': { endPrice: 412, volatility: 0.028, yearlyTrend: 0.45 },
+}
 
 function generateCandles(
-  startPrice: number,
-  volatility: number,
-  trend: number,
-  days: number,
+  config: TokenPriceConfig,
+  interval: number,
+  duration: number,
 ): OHLCCandle[] {
+  const startTime = END_TIME - duration
+  const numCandles = Math.floor(duration / interval)
+
+  // Work backwards from endPrice to derive startPrice
+  const startPrice = config.endPrice / (1 + config.yearlyTrend * (duration / (365 * 86400)))
+
+  // Use interval + endPrice as seed for determinism per granularity
+  const rand = createRng(Math.round(config.endPrice * 100) + interval)
+
   const candles: OHLCCandle[] = []
   let price = startPrice
-  // Seeded pseudo-random for determinism
-  let seed = Math.round(startPrice * 100)
-  function rand() {
-    seed = (seed * 16807 + 0) % 2147483647
-    return (seed & 0x7fffffff) / 0x7fffffff
-  }
 
-  for (let i = 0; i < days; i++) {
-    const dailyTrend = trend / days
-    const change = (rand() - 0.48) * volatility + dailyTrend * price
+  // Scale volatility to interval (smaller intervals = smaller moves)
+  const intervalDays = interval / 86400
+  const scaledVol = config.volatility * Math.sqrt(intervalDays)
+
+  for (let i = 0; i < numCandles; i++) {
+    const trendPerCandle = (config.yearlyTrend * price) / (365 * 86400 / interval)
+    const change = (rand() - 0.48) * scaledVol * price + trendPerCandle
     const open = price
-    const close = Math.max(open * 0.8, open + change)
-    const high = Math.max(open, close) * (1 + rand() * volatility * 0.3)
-    const low = Math.min(open, close) * (1 - rand() * volatility * 0.3)
+    const close = Math.max(open * 0.9, open + change)
+    const high = Math.max(open, close) * (1 + rand() * scaledVol * 0.5)
+    const low = Math.min(open, close) * (1 - rand() * scaledVol * 0.5)
+
     candles.push({
-      time: START_TIME + i * DAY,
+      time: startTime + i * interval,
       open: Math.round(open * 100) / 100,
       high: Math.round(high * 100) / 100,
       low: Math.round(low * 100) / 100,
@@ -101,21 +145,14 @@ function generateCandles(
     })
     price = close
   }
+
   return candles
 }
 
-// Per-token candle data: 365 daily candles each
-const CANDLES_BY_TOKEN: Record<string, OHLCCandle[]> = {
-  // WBTC: ~$45k → ~$68k over a year
-  '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599': generateCandles(45000, 0.025, 0.5, 365),
-  // ETH: ~$2200 → ~$3500
-  '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee': generateCandles(2200, 0.03, 0.6, 365),
-  // USDC: ~$1.00 stable
-  '0xff970a61a04b1ca14834a43f5de4533ebddb5cc8': generateCandles(1.0, 0.001, 0.0, 365),
-  // POL: ~$0.50 → ~$0.87
-  '0x0000000000000000000000000000000000001010': generateCandles(0.50, 0.04, 0.7, 365),
-  // WBNB: ~$280 → ~$412
-  '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c': generateCandles(280, 0.028, 0.45, 365),
+export function getMockCandles(tokenAddress: string, timeRange?: string): OHLCCandle[] {
+  const config = TOKEN_CONFIGS[tokenAddress] ?? TOKEN_CONFIGS['0x2260fac5e5542a773aa44fbcfedf7c193bc2c599']
+  const range = RANGE_CONFIGS[timeRange ?? 'max'] ?? RANGE_CONFIGS['max']
+  return generateCandles(config, range.interval, range.duration)
 }
 
 // --- Per-token trades ---
@@ -179,18 +216,6 @@ function makeTrade(
     sgdNow,
     fxImpact: Math.round((sgdNow - sgdThen) * 100) / 100,
   }
-}
-
-// --- Public API ---
-
-export function getMockCandles(tokenAddress: string, timeRange?: string): OHLCCandle[] {
-  const allCandles = CANDLES_BY_TOKEN[tokenAddress] ?? CANDLES_BY_TOKEN['0x2260fac5e5542a773aa44fbcfedf7c193bc2c599']
-  if (!timeRange || timeRange === 'max') return allCandles
-
-  const days = parseInt(timeRange, 10)
-  if (isNaN(days)) return allCandles
-
-  return allCandles.slice(-days)
 }
 
 export function getMockTrades(tokenAddress: string): Trade[] {
