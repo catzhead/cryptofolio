@@ -20,9 +20,16 @@ interface PriceChartProps {
   onTradeClick: (index: number) => void
 }
 
+function tradeTimeToCandle(timestamp: string): Time {
+  // Snap to midnight UTC to align with daily candle timestamps
+  const ms = new Date(timestamp).getTime()
+  const dayMs = 86400 * 1000
+  return (Math.floor(ms / dayMs) * dayMs / 1000) as Time
+}
+
 function tradesToMarkers(trades: Trade[]): SeriesMarker<Time>[] {
   return trades.map((trade, index) => ({
-    time: (Math.floor(new Date(trade.blockTimestamp).getTime() / 1000)) as Time,
+    time: tradeTimeToCandle(trade.blockTimestamp),
     position: trade.type === 'buy' ? 'belowBar' as const : 'aboveBar' as const,
     color: trade.type === 'buy' ? '#4ade80' : '#ef4444',
     shape: trade.type === 'buy' ? 'arrowUp' as const : 'arrowDown' as const,
@@ -123,7 +130,7 @@ export function PriceChart({ candles, trades, selectedTradeIndex, onTradeClick }
     if (selectedTradeIndex === null || !chartRef.current || !trades[selectedTradeIndex]) return
 
     const trade = trades[selectedTradeIndex]
-    const targetTime = Math.floor(new Date(trade.blockTimestamp).getTime() / 1000)
+    const targetTime = tradeTimeToCandle(trade.blockTimestamp) as number
     const dayInSeconds = 86400
     const offset = 15 * dayInSeconds
 
