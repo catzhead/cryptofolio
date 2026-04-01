@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useState } from 'react'
 import {
   createChart,
   createSeriesMarkers,
@@ -21,21 +21,33 @@ interface PriceChartProps {
 }
 
 function tradeTimeToCandle(timestamp: string): Time {
-  // Snap to midnight UTC to align with daily candle timestamps
   const ms = new Date(timestamp).getTime()
   const dayMs = 86400 * 1000
   return (Math.floor(ms / dayMs) * dayMs / 1000) as Time
 }
 
-function tradesToMarkers(trades: Trade[]): SeriesMarker<Time>[] {
-  return trades.map((trade, index) => ({
-    time: tradeTimeToCandle(trade.blockTimestamp),
-    position: trade.type === 'buy' ? 'belowBar' as const : 'aboveBar' as const,
-    color: trade.type === 'buy' ? '#4ade80' : '#ef4444',
-    shape: trade.type === 'buy' ? 'arrowUp' as const : 'arrowDown' as const,
-    text: `${trade.type === 'buy' ? 'BUY' : 'SELL'} ${trade.valueFormatted}`,
-    id: String(index),
-  }))
+function tradesToMarkers(trades: Trade[], selectedIndex: number | null): SeriesMarker<Time>[] {
+  return trades.map((trade, index) => {
+    const isSelected = index === selectedIndex
+    const isBuy = trade.type === 'buy'
+    return {
+      time: tradeTimeToCandle(trade.blockTimestamp),
+      position: isBuy ? 'belowBar' as const : 'aboveBar' as const,
+      color: isSelected
+        ? '#ffffff'
+        : isBuy ? '#4ade80' : '#ef4444',
+      shape: isBuy ? 'arrowUp' as const : 'arrowDown' as const,
+      text: `${isBuy ? 'BUY' : 'SELL'} ${trade.valueFormatted}`,
+      id: String(index),
+      size: isSelected ? 2 : 1,
+    }
+  })
+}
+
+interface PingPosition {
+  x: number
+  y: number
+  key: number
 }
 
 export function PriceChart({ candles, trades, selectedTradeIndex, onTradeClick }: PriceChartProps) {
@@ -43,6 +55,7 @@ export function PriceChart({ candles, trades, selectedTradeIndex, onTradeClick }
   const chartRef = useRef<IChartApi | null>(null)
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null)
   const markersRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null)
+  const [ping, setPing] = useState<PingPosition | null>(null)
 
   const handleClick = useCallback(
     (param: any) => {
@@ -112,6 +125,7 @@ export function PriceChart({ candles, trades, selectedTradeIndex, onTradeClick }
     }
   }, [handleClick])
 
+  // Update candle data
   useEffect(() => {
     if (!seriesRef.current) return
     const data: CandlestickData<Time>[] = candles.map((c) => ({
@@ -122,36 +136,86 @@ export function PriceChart({ candles, trades, selectedTradeIndex, onTradeClick }
       close: c.close,
     }))
     seriesRef.current.setData(data)
-    markersRef.current?.setMarkers(tradesToMarkers(trades))
     chartRef.current?.timeScale().fitContent()
-  }, [candles, trades])
+  }, [candles])
 
+  // Update markers when trades or selection changes
   useEffect(() => {
-    if (selectedTradeIndex === null || !chartRef.current || !seriesRef.current || !trades[selectedTradeIndex]) return
+    if (!markersRef.current) return
+    markersRef.current.setMarkers(tradesToMarkers(trades, selectedTradeIndex))
+  }, [trades, selectedTradeIndex])
 
+  // Pan to selected trade and show ping
+  useEffect(() => {
+    if (selectedTradeIndex === null || !chartRef.current || !seriesRef.current || !trades[selectedTradeIndex]) {
+      setPing(null)
+      return
+    }
+
+    const chart = chartRef.current
+    const series = seriesRef.current
     const trade = trades[selectedTradeIndex]
     const targetTime = tradeTimeToCandle(trade.blockTimestamp) as Time
 
-    // Find the bar index for this time and scroll to center it, preserving zoom
-    const data = seriesRef.current.data()
+    // Pan to center on the trade
+    const data = series.data()
     const barIndex = data.findIndex((d) => (d.time as number) >= (targetTime as number))
     if (barIndex >= 0) {
-      const visibleRange = chartRef.current.timeScale().getVisibleLogicalRange()
+      const visibleRange = chart.timeScale().getVisibleLogicalRange()
       if (visibleRange) {
         const barsVisible = visibleRange.to - visibleRange.from
         const centerOffset = barsVisible / 2
-        chartRef.current.timeScale().setVisibleLogicalRange({
+        chart.timeScale().setVisibleLogicalRange({
           from: barIndex - centerOffset,
           to: barIndex + centerOffset,
         })
       }
     }
+
+    // Calculate pixel position for the ping
+    const timeCoord = chart.timeScale().timeToCoordinate(targetTime)
+    const bar = data.find((d) => (d.time as number) === (targetTime as number)) as CandlestickData<Time> | undefined
+    if (timeCoord !== null && bar) {
+      const price = trade.type === 'buy' ? bar.low : bar.high
+      const priceCoord = series.priceToCoordinate(price)
+      if (priceCoord !== null) {
+        setPing({ x: timeCoord, y: priceCoord, key: Date.now() })
+      }
+    }
   }, [selectedTradeIndex, trades])
 
   return (
-    <div
-      ref={containerRef}
-      className="w-full rounded-lg overflow-hidden"
-    />
+    <div ref={containerRef} className="w-full rounded-lg overflow-hidden relative">
+      {ping && (
+        <div
+          key={ping.key}
+          className="absolute pointer-events-none"
+          style={{ left: ping.x, top: ping.y, transform: 'translate(-50%, -50%)' }}
+        >
+          <div className="w-3 h-3 rounded-full bg-white opacity-80" />
+          <div className="absolute inset-0 w-3 h-3 rounded-full bg-white animate-ping" />
+          <div
+            className="absolute rounded-full border-2 border-white opacity-0"
+            style={{
+              width: 40,
+              height: 40,
+              left: -14,
+              top: -14,
+              animation: 'radar-ring 1s ease-out forwards',
+            }}
+          />
+          <div
+            className="absolute rounded-full border-2 border-white opacity-0"
+            style={{
+              width: 40,
+              height: 40,
+              left: -14,
+              top: -14,
+              animation: 'radar-ring 1s ease-out 0.3s forwards',
+            }}
+          />
+        </div>
+      )}
+    </div>
   )
 }
