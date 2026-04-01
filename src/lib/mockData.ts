@@ -67,7 +67,7 @@ export const MOCK_TOKENS: TokenBalance[] = [
 
 const DAY = 86400
 // 365 days ending ~2026-03-31
-const END_TIME = 1743379200 // 2026-03-31 00:00:00 UTC
+const END_TIME = 1774915200 // 2026-03-31 00:00:00 UTC
 const START_TIME = END_TIME - 365 * DAY
 
 function generateCandles(
