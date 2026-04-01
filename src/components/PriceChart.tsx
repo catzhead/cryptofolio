@@ -47,7 +47,7 @@ function tradesToMarkers(trades: Trade[], candles: OHLCCandle[], selectedIndex: 
         position: isBuy ? 'belowBar' as const : 'aboveBar' as const,
         color: isSelected
           ? '#ffffff'
-          : isBuy ? '#4ade80' : '#ef4444',
+          : isBuy ? '#6ec47a' : '#c45a50',
         shape: isBuy ? 'arrowUp' as const : 'arrowDown' as const,
         text: `${isBuy ? 'BUY' : 'SELL'} ${trade.valueFormatted}`,
         id: String(index),
@@ -80,12 +80,12 @@ export function PriceChart({ candles, trades, selectedTradeIndex, onTradeClick }
 
     const chart = createChart(containerRef.current, {
       layout: {
-        background: { type: ColorType.Solid, color: '#0a0a1a' },
-        textColor: '#6b7280',
+        background: { type: ColorType.Solid, color: '#1a1610' },
+        textColor: '#8a7e6a',
       },
       grid: {
-        vertLines: { color: '#1e1e3a' },
-        horzLines: { color: '#1e1e3a' },
+        vertLines: { color: '#2d2820' },
+        horzLines: { color: '#2d2820' },
       },
       width: containerRef.current.clientWidth,
       height: 400,
@@ -110,11 +110,11 @@ export function PriceChart({ candles, trades, selectedTradeIndex, onTradeClick }
     })
 
     const series = chart.addSeries(CandlestickSeries, {
-      upColor: '#4ade80',
-      downColor: '#ef4444',
+      upColor: '#6ec47a',
+      downColor: '#c45a50',
       borderVisible: false,
-      wickUpColor: '#4ade80',
-      wickDownColor: '#ef4444',
+      wickUpColor: '#6ec47a',
+      wickDownColor: '#c45a50',
     })
 
     chartRef.current = chart

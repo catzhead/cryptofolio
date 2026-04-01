@@ -14,8 +14,8 @@ export function TimeRangeBar({ selected, onSelect }: TimeRangeBarProps) {
           onClick={() => onSelect(option.days)}
           className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
             selected === option.days
-              ? 'bg-rose-600 text-white'
-              : 'bg-slate-800 text-slate-400 hover:text-white'
+              ? 'bg-amber-600 text-white'
+              : 'bg-stone-800 text-stone-400 hover:text-white'
           }`}
         >
           {option.label}

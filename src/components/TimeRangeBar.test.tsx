@@ -15,7 +15,7 @@ describe('TimeRangeBar', () => {
   it('highlights the selected range', () => {
     render(<TimeRangeBar selected="30" onSelect={vi.fn()} />)
     const button = screen.getByText('1M')
-    expect(button.className).toContain('bg-rose-600')
+    expect(button.className).toContain('bg-amber-600')
   })
 
   it('calls onSelect with the days value', async () => {

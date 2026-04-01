@@ -29,21 +29,21 @@ export function TokenDropdown({ tokens, selectedIndex, onSelect }: TokenDropdown
     <div ref={ref} className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 hover:bg-slate-750 transition-colors"
+        className="w-full flex items-center justify-between bg-stone-800 border border-stone-700 rounded-lg px-4 py-3 hover:bg-stone-750 transition-colors"
       >
         <div className="flex items-center gap-3">
           <span className="text-white font-bold">{selected.symbol}</span>
-          <span className="text-slate-400 text-sm">({CHAINS[selected.chain].name})</span>
-          <span className="text-slate-300 text-sm">{selected.balanceFormatted}</span>
-          <span className="text-slate-400 text-sm">
+          <span className="text-stone-400 text-sm">({CHAINS[selected.chain].name})</span>
+          <span className="text-stone-300 text-sm">{selected.balanceFormatted}</span>
+          <span className="text-stone-400 text-sm">
             ${(selected.usdValue ?? 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}
           </span>
         </div>
-        <span className="text-slate-400">{isOpen ? '▲' : '▼'}</span>
+        <span className="text-stone-400">{isOpen ? '▲' : '▼'}</span>
       </button>
 
       {isOpen && (
-        <div className="absolute z-10 w-full mt-1 bg-slate-800 border border-slate-700 rounded-lg overflow-hidden shadow-xl">
+        <div className="absolute z-10 w-full mt-1 bg-stone-800 border border-stone-700 rounded-lg overflow-hidden shadow-xl">
           {tokens.map((token, index) => (
             <button
               key={`${token.tokenAddress}-${token.chain}`}
@@ -51,19 +51,19 @@ export function TokenDropdown({ tokens, selectedIndex, onSelect }: TokenDropdown
                 onSelect(index)
                 setIsOpen(false)
               }}
-              className={`w-full flex items-center justify-between px-4 py-3 hover:bg-slate-700 transition-colors border-b border-slate-700/50 last:border-b-0 ${
-                index === selectedIndex ? 'bg-slate-700/50' : ''
+              className={`w-full flex items-center justify-between px-4 py-3 hover:bg-stone-700 transition-colors border-b border-stone-700/50 last:border-b-0 ${
+                index === selectedIndex ? 'bg-stone-700/50' : ''
               }`}
             >
               <div className="flex items-center gap-3">
-                <span className={`font-bold ${index === selectedIndex ? 'text-rose-500' : 'text-white'}`}>
+                <span className={`font-bold ${index === selectedIndex ? 'text-amber-500' : 'text-white'}`}>
                   {token.symbol}
                 </span>
-                <span className="text-slate-400 text-sm">({CHAINS[token.chain].name})</span>
+                <span className="text-stone-400 text-sm">({CHAINS[token.chain].name})</span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-slate-300 text-sm">{token.balanceFormatted}</span>
-                <span className="text-slate-400 text-sm">
+                <span className="text-stone-300 text-sm">{token.balanceFormatted}</span>
+                <span className="text-stone-400 text-sm">
                   ${(token.usdValue ?? 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}
                 </span>
               </div>

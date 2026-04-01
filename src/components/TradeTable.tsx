@@ -40,42 +40,42 @@ export function TradeTable({ trades, tokenSymbol, currentValue, selectedIndex, o
     runningFxImpact += trade.fxImpact ?? 0
 
     const isSelected = selectedIndex === index
-    const highlight = isSelected ? 'bg-slate-700/60 ring-1 ring-rose-500/50' : ''
+    const highlight = isSelected ? 'bg-stone-700/60 ring-1 ring-amber-500/50' : ''
 
     return (
       <tr
         key={trade.transactionHash}
         onClick={() => onRowClick(index)}
         role="row"
-        className={`cursor-pointer hover:bg-slate-800/50 transition-colors ${highlight}`}
+        className={`cursor-pointer hover:bg-stone-800/50 transition-colors ${highlight}`}
       >
-        <td className="px-3 py-2 text-slate-300 text-sm">
+        <td className="px-3 py-2 text-stone-300 text-sm">
           {formatTimestamp(trade.blockTimestamp)}
         </td>
-        <td className={`px-3 py-2 font-bold text-sm ${trade.type === 'buy' ? 'text-green-400' : 'text-red-400'}`}>
+        <td className={`px-3 py-2 font-bold text-sm ${trade.type === 'buy' ? 'text-emerald-400' : 'text-red-400'}`}>
           {trade.type === 'buy' ? 'Buy' : 'Sell'}
         </td>
         <td className="px-3 py-2">
-          <div className="text-slate-200 text-sm">{trade.valueFormatted} {tokenSymbol}</div>
-          <div className="text-slate-500 text-xs">Total: {formatAmount(runningAmount)}</div>
+          <div className="text-stone-200 text-sm">{trade.valueFormatted} {tokenSymbol}</div>
+          <div className="text-stone-500 text-xs">Total: {formatAmount(runningAmount)}</div>
         </td>
         <td className="px-3 py-2">
-          <div className="text-slate-200 text-sm">{formatCurrency(trade.usdValue ?? 0)}</div>
-          <div className="text-slate-500 text-xs">Total: {formatCurrency(runningUsd)}</div>
+          <div className="text-stone-200 text-sm">{formatCurrency(trade.usdValue ?? 0)}</div>
+          <div className="text-stone-500 text-xs">Total: {formatCurrency(runningUsd)}</div>
         </td>
         <td className="px-3 py-2">
-          <div className="text-slate-200 text-sm">{formatCurrency(trade.sgdThen ?? 0, 'S$')}</div>
-          <div className="text-slate-500 text-xs">Total: {formatCurrency(runningSgdThen, 'S$')}</div>
+          <div className="text-stone-200 text-sm">{formatCurrency(trade.sgdThen ?? 0, 'S$')}</div>
+          <div className="text-stone-500 text-xs">Total: {formatCurrency(runningSgdThen, 'S$')}</div>
         </td>
         <td className="px-3 py-2">
-          <div className="text-slate-200 text-sm">{formatCurrency(trade.sgdNow ?? 0, 'S$')}</div>
-          <div className="text-slate-500 text-xs">Total: {formatCurrency(runningSgdNow, 'S$')}</div>
+          <div className="text-stone-200 text-sm">{formatCurrency(trade.sgdNow ?? 0, 'S$')}</div>
+          <div className="text-stone-500 text-xs">Total: {formatCurrency(runningSgdNow, 'S$')}</div>
         </td>
         <td className="px-3 py-2">
-          <div className={`text-sm ${(trade.fxImpact ?? 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+          <div className={`text-sm ${(trade.fxImpact ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
             {(trade.fxImpact ?? 0) >= 0 ? '+' : '-'}{formatCurrency(trade.fxImpact ?? 0, 'S$')}
           </div>
-          <div className="text-slate-500 text-xs">
+          <div className="text-stone-500 text-xs">
             Total: {runningFxImpact >= 0 ? '+' : '-'}{formatCurrency(runningFxImpact, 'S$')}
           </div>
         </td>
@@ -90,7 +90,7 @@ export function TradeTable({ trades, tokenSymbol, currentValue, selectedIndex, o
     <div className="overflow-x-auto">
       <table className="w-full">
         <thead>
-          <tr className="bg-slate-900/80 text-slate-400 text-xs">
+          <tr className="bg-stone-900/80 text-stone-400 text-xs">
             <th className="px-3 py-2 text-left font-medium">Date & Time</th>
             <th className="px-3 py-2 text-left font-medium">Type</th>
             <th className="px-3 py-2 text-left font-medium">Amount</th>
@@ -100,25 +100,25 @@ export function TradeTable({ trades, tokenSymbol, currentValue, selectedIndex, o
             <th className="px-3 py-2 text-left font-medium">FX Impact</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-800/50">
+        <tbody className="divide-y divide-stone-800/50">
           {rows}
         </tbody>
       </table>
 
-      <div className="flex justify-between items-center mt-3 px-3 py-2 bg-slate-900/50 rounded-lg text-sm">
+      <div className="flex justify-between items-center mt-3 px-3 py-2 bg-stone-900/50 rounded-lg text-sm">
         <div>
-          <span className="text-slate-400">Holdings: </span>
+          <span className="text-stone-400">Holdings: </span>
           <span className="text-white font-medium">{formatAmount(totalAmount)} {tokenSymbol}</span>
         </div>
         {currentValue !== undefined && (
           <div>
-            <span className="text-slate-400">Current value: </span>
+            <span className="text-stone-400">Current value: </span>
             <span className="text-white font-medium">{formatCurrency(currentValue)}</span>
           </div>
         )}
         <div>
-          <span className="text-slate-400">Total FX impact: </span>
-          <span className={totalFxImpact >= 0 ? 'text-green-400' : 'text-red-400'}>
+          <span className="text-stone-400">Total FX impact: </span>
+          <span className={totalFxImpact >= 0 ? 'text-emerald-400' : 'text-red-400'}>
             {totalFxImpact >= 0 ? '+' : '-'}{formatCurrency(totalFxImpact, 'S$')}
           </span>
         </div>

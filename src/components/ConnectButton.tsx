@@ -16,14 +16,14 @@ export function ConnectButton() {
             {!connected ? (
               <button
                 onClick={openConnectModal}
-                className="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
               >
                 Connect Wallet
               </button>
             ) : (
               <button
                 onClick={openAccountModal}
-                className="bg-slate-800 hover:bg-slate-700 text-green-400 px-4 py-2 rounded-lg font-mono text-sm transition-colors"
+                className="bg-stone-800 hover:bg-stone-700 text-emerald-400 px-4 py-2 rounded-lg font-mono text-sm transition-colors"
               >
                 {account.displayName}
               </button>

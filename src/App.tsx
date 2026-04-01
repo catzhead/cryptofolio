@@ -21,11 +21,11 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
   render() {
     if (this.state.error) {
       return (
-        <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
+        <div className="min-h-screen bg-stone-950 text-white flex items-center justify-center">
           <div className="text-center">
             <h2 className="text-xl font-bold text-red-400 mb-2">Something went wrong</h2>
-            <p className="text-slate-400 mb-4">{this.state.error.message}</p>
-            <button onClick={() => this.setState({ error: null })} className="bg-rose-600 px-4 py-2 rounded-lg">
+            <p className="text-stone-400 mb-4">{this.state.error.message}</p>
+            <button onClick={() => this.setState({ error: null })} className="bg-amber-600 px-4 py-2 rounded-lg">
               Try again
             </button>
           </div>
@@ -139,16 +139,16 @@ function Dashboard() {
     : 0
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-screen bg-stone-950 text-white">
       <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-xl font-bold text-rose-500">
+          <h1 className="text-xl font-bold text-amber-500">
             CryptoFolio
-            {isDemo && <span className="ml-2 text-xs bg-yellow-500 text-black px-2 py-0.5 rounded-full">DEMO</span>}
+            {isDemo && <span className="ml-2 text-xs bg-amber-400 text-black px-2 py-0.5 rounded-full">DEMO</span>}
           </h1>
           {isDemo ? (
-            <span className="bg-slate-800 text-green-400 px-4 py-2 rounded-lg font-mono text-sm">
+            <span className="bg-stone-800 text-emerald-400 px-4 py-2 rounded-lg font-mono text-sm">
               0xDemo...1234
             </span>
           ) : (
@@ -158,7 +158,7 @@ function Dashboard() {
 
         {!isConnected ? (
           <div className="flex items-center justify-center min-h-[60vh]">
-            <p className="text-slate-400 text-lg">Connect your wallet to get started</p>
+            <p className="text-stone-400 text-lg">Connect your wallet to get started</p>
           </div>
         ) : (
           <>
@@ -169,7 +169,7 @@ function Dashboard() {
 
             {/* Token selector */}
             {!isDemo && tokensLoading ? (
-              <p className="text-slate-400">Loading tokens...</p>
+              <p className="text-stone-400">Loading tokens...</p>
             ) : !isDemo && tokensError ? (
               <p className="text-red-400">Error loading tokens: {tokensError.message}</p>
             ) : tokens && tokens.length > 0 ? (
@@ -197,15 +197,15 @@ function Dashboard() {
                       onTradeClick={select}
                     />
                   ) : (
-                    <div className="w-full h-[400px] rounded-lg bg-[#0a0a1a] flex items-center justify-center">
-                      <div className="text-slate-500 text-sm">Loading chart...</div>
+                    <div className="w-full h-[400px] rounded-lg bg-[#1a1610] flex items-center justify-center">
+                      <div className="text-stone-500 text-sm">Loading chart...</div>
                     </div>
                   )}
                 </div>
 
                 {/* Trade table */}
                 {!isDemo && tradesLoading && (
-                  <p className="text-slate-400">Loading trade history...</p>
+                  <p className="text-stone-400">Loading trade history...</p>
                 )}
                 {!isDemo && tradesError && (
                   <p className="text-red-400">Error loading trades: {tradesError.message}</p>
@@ -224,7 +224,7 @@ function Dashboard() {
                 )}
               </>
             ) : (
-              <p className="text-slate-400">No tokens found for this wallet</p>
+              <p className="text-stone-400">No tokens found for this wallet</p>
             )}
           </>
         )}
