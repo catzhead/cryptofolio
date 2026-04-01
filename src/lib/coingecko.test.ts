@@ -57,7 +57,7 @@ describe('fetchHistoricalPrice', () => {
 })
 
 describe('resolveCoingeckoId', () => {
-  it('maps a contract address to a CoinGecko ID', async () => {
+  it('maps a contract address to a CoinGecko ID via API', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({ id: 'wrapped-bitcoin' }),
@@ -65,5 +65,47 @@ describe('resolveCoingeckoId', () => {
 
     const id = await resolveCoingeckoId('ethereum', '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599')
     expect(id).toBe('wrapped-bitcoin')
+    expect(mockFetch).toHaveBeenCalledTimes(1)
+  })
+
+  it('resolves native ETH without API call', async () => {
+    const id = await resolveCoingeckoId('ethereum', '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee')
+    expect(id).toBe('ethereum')
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+
+  it('resolves native POL without API call', async () => {
+    const id = await resolveCoingeckoId('polygon-pos', '0x0000000000000000000000000000000000001010')
+    expect(id).toBe('matic-network')
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+
+  it('resolves native BNB without API call', async () => {
+    const id = await resolveCoingeckoId('binance-smart-chain', '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c')
+    expect(id).toBe('wbnb')
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+
+  it('resolves native ETH on Arbitrum without API call', async () => {
+    const id = await resolveCoingeckoId('arbitrum-one', '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee')
+    expect(id).toBe('ethereum')
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+
+  it('is case-insensitive for contract addresses', async () => {
+    const id = await resolveCoingeckoId('ethereum', '0xEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE')
+    expect(id).toBe('ethereum')
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+
+  it('falls back to API for unknown addresses', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ id: 'some-token' }),
+    })
+
+    const id = await resolveCoingeckoId('ethereum', '0x1234567890abcdef1234567890abcdef12345678')
+    expect(id).toBe('some-token')
+    expect(mockFetch).toHaveBeenCalledTimes(1)
   })
 })
