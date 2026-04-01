@@ -2,6 +2,8 @@
 
 A multi-chain crypto portfolio tracker with candlestick charts, trade history, and FX impact analysis. Built with React, TypeScript, and a warm solarized theme.
 
+![CryptoFolio screenshot](docs/screenshot.png)
+
 ## Features
 
 - **Multi-chain wallet support** -- Connect via Rabby, MetaMask, or any WalletConnect-compatible wallet. Tracks tokens across Ethereum, Arbitrum, Polygon, and BSC.
