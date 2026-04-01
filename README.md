@@ -1,73 +1,86 @@
-# React + TypeScript + Vite
+# CryptoFolio
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A multi-chain crypto portfolio tracker with candlestick charts, trade history, and FX impact analysis. Built with React, TypeScript, and a warm solarized theme.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Multi-chain wallet support** -- Connect via Rabby, MetaMask, or any WalletConnect-compatible wallet. Tracks tokens across Ethereum, Arbitrum, Polygon, and BSC.
+- **Candlestick price charts** -- Interactive charts powered by Lightweight Charts with time ranges from 1D (30-min candles) to 1Y (daily candles).
+- **Trade history with FX tracking** -- Displays buy/sell history enriched with historical USD prices and SGD conversion rates, including cumulative FX impact.
+- **Smart chart navigation** -- Clicking a trade in the table shifts the chart window to that date while preserving the selected candle granularity. Trades within the current view are highlighted without recentering.
+- **Demo mode** -- Append `?demo=true` to the URL for a fully functional demo with realistic mock data across all tokens and time ranges. No wallet or API keys required.
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Layer | Technology |
+|-------|-----------|
+| Framework | React 19 + TypeScript |
+| Styling | Tailwind CSS 4 |
+| Charts | Lightweight Charts v5 |
+| Wallet | RainbowKit + wagmi + viem |
+| Data | React Query with persistent caching |
+| Prices | CoinGecko API |
+| Balances & Transfers | Moralis Web3 API |
+| FX Rates | Frankfurter API |
+| Testing | Vitest + Testing Library |
+| Build | Vite 8 |
 
-## Expanding the ESLint configuration
+## Getting Started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Prerequisites
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- Node.js 18+
+- A [Moralis](https://moralis.io/) API key (free tier works)
+- A [WalletConnect](https://cloud.walletconnect.com/) project ID
+- Optionally, a [CoinGecko](https://www.coingecko.com/en/api) demo API key (reduces rate limiting)
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Setup
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+git clone git@github.com:catzhead/cryptofolio.git
+cd cryptofolio
+npm install
+cp .env.example .env
+# Edit .env with your API keys
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Open http://localhost:5173 (or http://localhost:5173/?demo=true for demo mode).
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Running Tests
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm test          # watch mode
+npm run test:run  # single run
 ```
+
+### Building for Production
+
+```bash
+npm run build
+npm run preview
+```
+
+A `Containerfile` is included for container-based deployments with nginx.
+
+## Architecture
+
+```
+src/
+  components/     UI components (chart, table, dropdowns, etc.)
+  hooks/          React Query hooks for data fetching
+  lib/            API clients (Moralis, CoinGecko, Frankfurter) and mock data
+  types.ts        Shared TypeScript types
+```
+
+**Data flow:** Wallet connection (wagmi) -> token balances (Moralis) -> price charts (CoinGecko OHLC) and trade history (Moralis transfers + CoinGecko historical prices + Frankfurter FX rates).
+
+For demo mode, all data is generated deterministically from seeded PRNGs, producing realistic price movements unique to each token.
+
+## Built With Claude
+
+This project was built entirely through pair programming with [Claude Code](https://claude.ai/claude-code) (Claude Opus 4.6) by Anthropic. From initial scaffold to the final solarized theme, every feature, bug fix, and test was developed collaboratively in conversation.
+
+## License
+
+MIT
